@@ -1,0 +1,2588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Letterhead // Concrete Typographic Soundgraph System</title>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box; margin: 0; padding: 0;
+            cursor: none !important;
+        }
+
+        html, body {
+            background-color: #ffffff; color: #000000;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            width: 100vw; height: 100vh; overflow: hidden;
+            position: relative; user-select: none; -webkit-user-select: none;
+            cursor: none !important;
+        }
+
+        #customReticleCursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 22px;
+            height: 22px;
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: difference;
+            transform: translate3d(-100px, -100px, 0) translate(-50%, -50%);
+            will-change: transform;
+        }
+        #customReticleCursor svg {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #grain-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 50; opacity: 0.04; background-repeat: repeat;
+        }
+
+        #sheet {
+            position: relative; width: 100vw; height: 100vh;
+            background: #ffffff; overflow: hidden;
+        }
+
+        #mainCanvas {
+            display: block; width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0; z-index: 10;
+        }
+
+        .top-typography {
+            position: absolute; top: 25px; left: 35px; right: 35px;
+            display: flex; justify-content: space-between;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-weight: 900; font-size: 14px; line-height: 0.88;
+            letter-spacing: -0.9px; z-index: 40; pointer-events: none;
+            color: #ffffff; mix-blend-mode: difference;
+        }
+
+        .column-block { display: flex; gap: 40px; }
+        .text-group { display: flex; flex-direction: column; }
+        .mitdr-row { display: flex; align-items: center; gap: 4px; }
+
+        .tiny-icon {
+            width: 8px; height: 6px; background: #ffffff;
+            display: inline-block; position: relative;
+        }
+        .tiny-icon::before {
+            content: ''; position: absolute;
+            top: -2px; left: 0; width: 4px; height: 2px; background: #ffffff;
+        }
+
+        .interactive-trigger {
+            pointer-events: auto; cursor: var(--reticle-cursor); font-weight: 700;
+            letter-spacing: -0.5px; transition: opacity 0.15s;
+        }
+        .interactive-trigger:hover { opacity: 0.5; }
+
+        .bottom-typography {
+            position: absolute; bottom: 25px; left: 35px; right: 35px;
+            display: flex; justify-content: space-between;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-weight: 900; font-size: 11px; line-height: 1.15;
+            letter-spacing: -0.6px; z-index: 40; pointer-events: none;
+            color: #ffffff; mix-blend-mode: difference; text-transform: uppercase;
+        }
+
+        .bottom-col { display: flex; flex-direction: column; }
+        .right-align { text-align: right; align-items: flex-end; }
+
+        input[type="file"] { display: none; }
+
+        /* ================= IMMAGINE CENTRALE PIXELATA SENZA CORNICE ================= */
+        #centerImageContainer {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 35;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            pointer-events: auto;
+            touch-action: none;
+        }
+
+        #centerPixelCanvas {
+            width: 280px;
+            height: 280px;
+            display: block;
+            image-rendering: pixelated;
+            cursor: var(--reticle-cursor);
+            background: #ffffff;
+        }
+
+        #centerImageInfoBar {
+            width: 280px;
+            margin-top: 10px;
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-weight: 900;
+            font-size: 11px;
+            letter-spacing: -0.3px;
+            color: #000000;
+        }
+
+        #centerInfoLeft {
+            text-align: left;
+            min-width: 50px;
+        }
+
+        #centerInfoMode {
+            cursor: pointer;
+            text-align: center;
+            transition: opacity 0.15s;
+        }
+        #centerInfoMode:hover {
+            opacity: 0.6;
+        }
+
+        #centerInfoRight {
+            text-align: right;
+            font-family: 'Andale Mono', monospace;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        #centerInfoExplanation {
+            width: 280px;
+            margin-top: 5px;
+            display: none;
+            font-family: 'Andale Mono', monospace;
+            font-size: 8.5px;
+            font-weight: 700;
+            color: #555555;
+            text-align: center;
+            letter-spacing: 0.2px;
+            line-height: 1.3;
+        }
+
+        /* ================= MODALE DI EXPORT A4 ================= */
+        #exportModal {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.92); backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px); z-index: 1000;
+            display: none; flex-direction: column; align-items: center;
+            justify-content: center; padding: 20px;
+        }
+        #exportModal.active { display: flex; }
+
+        .modal-card {
+            background: #000000; border: 1px solid #333333;
+            max-width: 96vw; max-height: 94vh; display: flex;
+            flex-direction: column; align-items: center; gap: 12px;
+            padding: 18px 22px; box-shadow: 0 30px 80px rgba(0,0,0,0.95);
+            position: relative;
+        }
+
+        .modal-header-info {
+            width: 100%; display: flex; justify-content: space-between;
+            align-items: center; font-family: 'Andale Mono', monospace;
+            font-size: 10px; color: #aaaaaa; border-bottom: 1px solid #222222;
+            padding-bottom: 8px;
+        }
+
+        .modal-badge {
+            background: #ffffff; color: #000000; padding: 2px 6px;
+            font-weight: bold; font-size: 9px; letter-spacing: 0.5px;
+        }
+
+        .modal-image-container {
+            display: flex; justify-content: center; align-items: center;
+            background: #111111; border: 1px solid #282828;
+            max-height: 64vh; max-width: 86vw; overflow: auto; padding: 8px;
+        }
+
+        #modalPreviewImg {
+            max-height: 60vh; max-width: 100%; object-fit: contain;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8); display: block;
+            border: 1px solid #ffffff; cursor: grab;
+        }
+
+        .modal-help-banner {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 11px; color: #cccccc; text-align: center;
+            line-height: 1.4; max-width: 720px;
+        }
+        .modal-help-banner strong { color: #ffffff; }
+
+        .modal-actions {
+            display: flex; gap: 10px; flex-wrap: wrap;
+            justify-content: center; margin-top: 4px;
+        }
+
+        .modal-btn {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.5px; padding: 9px 18px; border: 1px solid #ffffff;
+            background: #000000; color: #ffffff; cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .modal-btn:hover { background: #ffffff; color: #000000; }
+        .modal-btn.primary { background: #ffffff; color: #000000; }
+        .modal-btn.primary:hover { background: #d8d8d8; }
+    </style>
+</head>
+<body>
+
+    <!-- Cursore a croce con inversione cromatica (nero su bianco, bianco sulle parti che toccano il nero) -->
+    <div id="customReticleCursor" aria-hidden="true">
+        <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="16" cy="16" r="2.8" fill="#ffffff"/>
+            <line x1="16" y1="3.2" x2="16" y2="10.2" stroke="#ffffff" stroke-width="2.0" stroke-linecap="round"/>
+            <line x1="16" y1="21.8" x2="16" y2="28.8" stroke="#ffffff" stroke-width="2.0" stroke-linecap="round"/>
+            <line x1="3.2" y1="16" x2="10.2" y2="16" stroke="#ffffff" stroke-width="2.0" stroke-linecap="round"/>
+            <line x1="21.8" y1="16" x2="28.8" y2="16" stroke="#ffffff" stroke-width="2.0" stroke-linecap="round"/>
+        </svg>
+    </div>
+
+    <div id="grain-overlay"></div>
+
+    <div id="sheet">
+        <!-- Canvas principale grafico -->
+        <canvas id="mainCanvas"></canvas>
+
+        <!-- Tipografia superiore svizzera -->
+        <div class="top-typography">
+            <div class="column-block">
+                <div class="text-group">
+                    <span>Spectral proof.</span>
+                    <span id="uiTrackName">AWAITING SOURCE.</span>
+                    <span>210x297mm.</span>
+                    <span>Black 000000.</span>
+                    <span class="mitdr-row"><span class="tiny-icon"></span>data print.</span>
+                </div>
+                <div class="text-group">
+                    <span>Optical matrix.</span>
+                    <span class="interactive-trigger" id="systemTrigger">[ SYSTEM: IMPRINT-SCANLINE ]</span>
+                    <span class="interactive-trigger" id="densityTrigger" style="margin-top:3px;">[ DENSITY: HIGH ]</span>
+                    <span class="interactive-trigger" id="fontTrigger" style="margin-top:3px;">[ FONT: TYPEWRITER ]</span>
+                </div>
+            </div>
+            <div class="column-block">
+                <div class="text-group">
+                    <span>Topographic-</span>
+                    <span>flow.</span>
+                    <span>Vector graph.</span>
+                    <span>Zero latency.</span>
+                    <span class="mitdr-row interactive-trigger" id="exportA4Trigger">
+                        <span class="tiny-icon"></span>wave data [EXPORT A4].
+                    </span>
+                    <span class="mitdr-row interactive-trigger" id="exportVideoTrigger" style="margin-top:3px;">
+                        <span class="tiny-icon"></span>motion reel [EXPORT VIDEO 15S].
+                    </span>
+                </div>
+                <div class="text-group">
+                    <span>Image to sound.</span>
+                    <span id="uiStatusText">Static baseline (ready).</span>
+                    <span class="interactive-trigger" id="loadAudioTrigger" style="margin-top:6px;">[ LOAD AUDIO ]</span>
+                    <span class="interactive-trigger" id="loadImageTrigger" style="margin-top:2px;">[ LOAD IMAGE ]</span>
+                    <span class="interactive-trigger" id="playTrigger" style="display:none; margin-top:2px;">[ PLAY AUDIO ]</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= CONTAINER IMMAGINE CENTRALE (SENZA CORNICE) ================= -->
+        <div id="centerImageContainer">
+            <canvas id="centerPixelCanvas" width="280" height="280"></canvas>
+            
+            <div id="centerImageInfoBar">
+                <span id="centerInfoLeft">9.6 %</span>
+                <span id="centerInfoMode">[ MODE: MATRIX ]</span>
+                <span id="centerInfoRight">NOTE: A6 (1760.0Hz)</span>
+            </div>
+
+            <div id="centerInfoExplanation">
+                <span id="centerExplainText">ROW 04 → FREQ 1760.0 HZ (HIGH PITCH) • LUM 90.4% → AMP 0.82 • NOTE A6</span>
+            </div>
+        </div>
+
+        <!-- Tipografia inferiore svizzera -->
+        <div class="bottom-typography">
+            <div class="bottom-col">
+                <span id="uiBottomTitle">CONCRETE TYPOGRAPHIC SOUNDGRAPH // FULL-BLEED A4</span>
+                <span id="uiTechnicalData">AWAITING SOURCE // 44100 HZ // CH: 2 // FFT 2048</span>
+            </div>
+            <div class="bottom-col right-align">
+                <span id="uiTimestamp">2026.11.08 // MIT-DR SPEC</span>
+                <span>210 × 297 MM // 300 DPI HI-RES PROOF</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Hidden file inputs -->
+    <input type="file" id="audioInput" accept="audio/*">
+    <input type="file" id="imageInput" accept="image/*">
+
+    <!-- Modal Export A4 -->
+    <div id="exportModal" role="dialog" aria-modal="true" aria-labelledby="modalProofTitle">
+        <div class="modal-card">
+            <div class="modal-header-info">
+                <span id="modalProofTitle">GENERATIVE TYPOGRAPHIC SCORE // 2480 × 3508 PX (300 DPI)</span>
+                <span class="modal-badge">HI-RES RENDER</span>
+            </div>
+            <div class="modal-image-container">
+                <img id="modalPreviewImg" alt="A4 Poster Preview" />
+            </div>
+            <div class="modal-help-banner">
+                <strong>Direct Save:</strong> Right-click on the image
+                (or <strong>long-press</strong> on mobile/tablet) → <em>"Save Image As..."</em>.
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn primary" id="btnModalDownloadWithImg">[ DOWNLOAD WITH IMAGE ]</button>
+                <button class="modal-btn primary" id="btnModalDownloadTypoOnly">[ DOWNLOAD TYPOGRAPHY ONLY ]</button>
+                <button class="modal-btn" id="btnModalClipboard">[ COPY IMAGE ]</button>
+                <button class="modal-btn" id="btnModalNewTab">[ OPEN IN NEW TAB ]</button>
+                <button class="modal-btn" id="btnModalClose">[ CLOSE ]</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Letterhead // Concrete Typographic Soundgraph & Image-to-Sound System
+         * 1. ALL'INIZIO: la tipografia non ha forma (linee dritte orizzontali) ed è 100% statica.
+         * 2. IMAGE-TO-SOUND FONDATO: le righe tipografiche seguono rigorosamente la matrice di pixel (Y=frequenza, X=tempo, intensità=oscurità).
+         * 3. PAUSA FEDELE: quando si mette in pausa si congela esattamente nella forma e stato in cui era!
+         * 4. IMMAGINE CENTRALE SENZA CORNICE: pixelata naturale a riposo, TouchDesigner B/W + note esplicative al tocco.
+         */
+
+        const AppState = {
+            systems: ['IMPRINT-SCANLINE', 'DISMAL-DLA', 'POETIC-CRUMBLE'],
+            currentSystemIndex: 0,
+            densityModes: ['NORMAL', 'HIGH', 'ULTRA'],
+            currentDensityIndex: 1,
+            fontModes: ['TYPEWRITER', 'GROTESK'],
+            currentFontIndex: 0,
+            
+            sourceType: 'NONE', // 'NONE' (iniziale piatto senza forma) | 'AUDIO' | 'IMAGE'
+            trackTitle: 'AWAITING SOURCE.',
+            technicalMeta: 'AWAITING SOURCE // 44100 HZ // CH: 2 // FFT 2048',
+            songProfile: {
+                sampleRate: 44100, duration: 0, channels: 2,
+                numBands: 64, numSlices: 140, matrix: null, spectralCentroid: 0.5
+            },
+            audioCtx: null, analyserNode: null, gainNode: null, mediaStreamDest: null,
+            audioSourceNode: null, audioBuffer: null, isPlayingAudio: false,
+            
+            // Image Scan State
+            pixelGridSize: 36, // 36x36 pixel grid
+            rawColorPixels: null, // [36][36] {r, g, b, lum}
+            imageLuminanceGrid: null, // [36][36] Float32Array (0 to 1)
+            scannedImageObj: null,
+            isMatrixMode: false, // true = TouchDesigner B/W Matrix, false = Resting Pixelated
+            activePixel: { x: 18, y: 4, darkness: 0.096, note: 'A6', freq: 1760.0 },
+
+            time: 0
+        };
+
+        const DOM = {
+            mainCanvas: document.getElementById('mainCanvas'),
+            uiTrackName: document.getElementById('uiTrackName'),
+            uiStatusText: document.getElementById('uiStatusText'),
+            uiBottomTitle: document.getElementById('uiBottomTitle'),
+            uiTechnicalData: document.getElementById('uiTechnicalData'),
+            uiTimestamp: document.getElementById('uiTimestamp'),
+            systemTrigger: document.getElementById('systemTrigger'),
+            densityTrigger: document.getElementById('densityTrigger'),
+            fontTrigger: document.getElementById('fontTrigger'),
+            exportA4Trigger: document.getElementById('exportA4Trigger'),
+            exportVideoTrigger: document.getElementById('exportVideoTrigger'),
+            loadAudioTrigger: document.getElementById('loadAudioTrigger'),
+            loadImageTrigger: document.getElementById('loadImageTrigger'),
+            playTrigger: document.getElementById('playTrigger'),
+            audioInput: document.getElementById('audioInput'),
+            imageInput: document.getElementById('imageInput'),
+            
+            // Central Image Components (Borderless / Senza Cornice)
+            centerImageContainer: document.getElementById('centerImageContainer'),
+            centerPixelCanvas: document.getElementById('centerPixelCanvas'),
+            centerImageInfoBar: document.getElementById('centerImageInfoBar'),
+            centerInfoLeft: document.getElementById('centerInfoLeft'),
+            centerInfoMode: document.getElementById('centerInfoMode'),
+            centerInfoRight: document.getElementById('centerInfoRight'),
+            centerInfoExplanation: document.getElementById('centerInfoExplanation'),
+            centerExplainText: document.getElementById('centerExplainText'),
+
+            exportModal: document.getElementById('exportModal'),
+            modalPreviewImg: document.getElementById('modalPreviewImg'),
+            btnModalDownloadWithImg: document.getElementById('btnModalDownloadWithImg'),
+            btnModalDownloadTypoOnly: document.getElementById('btnModalDownloadTypoOnly'),
+            btnModalClipboard: document.getElementById('btnModalClipboard'),
+            btnModalNewTab: document.getElementById('btnModalNewTab'),
+            btnModalClose: document.getElementById('btnModalClose')
+        };
+
+        // Grana analogica statica
+        (function initFastGrain() {
+            const gc = document.createElement('canvas');
+            gc.width = 128; gc.height = 128;
+            const gctx = gc.getContext('2d');            const gData = gctx.createImageData(128, 128);
+            for (let i = 0; i < gData.data.length; i += 4) {
+                const val = (Math.random() * 255) | 0;
+                gData.data[i] = val; gData.data[i+1] = val; gData.data[i+2] = val;
+                gData.data[i+3] = 14;
+            }
+            gctx.putImageData(gData, 0, 0);
+            document.getElementById('grain-overlay').style.backgroundImage = `url(${gc.toDataURL()})`;
+        })();
+
+        const ctxMain = DOM.mainCanvas.getContext('2d', { alpha: false });
+        const ctxCenterPixel = DOM.centerPixelCanvas.getContext('2d');
+
+        const now = new Date();
+        DOM.uiTimestamp.textContent = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} // MIT-DR SPEC`;
+
+        let currentDpr = 1;
+        function resizeMainCanvas() {
+            currentDpr = Math.min(window.devicePixelRatio || 1, 2);
+            DOM.mainCanvas.width = Math.floor(window.innerWidth * currentDpr);
+            DOM.mainCanvas.height = Math.floor(window.innerHeight * currentDpr);
+            ctxMain.scale(currentDpr, currentDpr);
+        }
+        window.addEventListener('resize', resizeMainCanvas);
+        resizeMainCanvas();
+
+        function showToast(msg) {
+            if (DOM.uiStatusText) {
+                DOM.uiStatusText.textContent = msg;
+            }
+        }
+
+        // =========================================================================
+        // PALETTE TIPOGRAFICHE ORIGINALI DEL POSTER (TOTER SCHMETTERLING) + DLA
+        // =========================================================================
+
+        const TYPO_PALETTES = {
+            ribbonSets: [
+                'mmmmmmmmmmmmmmmm', 'zzzzzzzzzzzzzzzz', 'bbbbbbbbbbbbbbbb',
+                'nnnnnnnnnnnnnnnn', 'wwwwwwwwwwwwwwww', 'oooooooooooooooo',
+                'kkkkkkkkkkkkkkkk', 'tttttttttttttttt', 'yyyyyyyyyyyyyyyy',
+                'vvvvvvvvvvvvvvvv', 'uuuuuuuuuuuuuuuu', 'xxxxxxxxxxxxxxxx',
+                'eeeeeeeeeeeeeeee', 'ffffffffffffffff', 'aaaaaaaaaaaaaaaa',
+                'ssssssssssssssss', '................'
+            ],
+            denseChars: ['M', 'W', 'B', 'N', 'm', 'w', 'z', '#', 'Z', 'E', 'R', 'H'],
+            crestHeavyChars: ['M', 'W', 'B', 'N', 'm', 'w', 'z', '#', 'Z', 'E', 'R', 'H'],
+            scatterChars: ['a','v','n','s','b','u','d','j','x','o','p','g','i','f','r','k','.',':'],
+            midEnergyChars: ['m', 'z', 'b', 'n', 'w', 'o', 'k', 't', 'y', 'v', 'u', 'x', 'e', 'f', 'a', 's'],
+            lowEnergyChars: ['a','v','n','s','b','u','d','j','x','o','p','g','i','f','r','k','.',':'],
+            // Dismal DLA glyphs (Mattia Resman - Dismal)
+            dlaGlyphs: ['#', '▓', '▒', '░', '□', '■', '▪', 'A', 'M', 'X', 'K', 'Z', '8', '4', '7', '0', '1', '+', '#', ':', '·']
+        };
+
+        const SCATTER_ITEMS = [
+            {char:'a',rx:0.12,ry:0.18},{char:'v',rx:0.22,ry:0.32},
+            {char:'n',rx:0.35,ry:0.22},{char:'s',rx:0.72,ry:0.44},
+            {char:'u',rx:0.85,ry:0.28},{char:'d',rx:0.28,ry:0.58},
+            {char:'j',rx:0.42,ry:0.72},{char:'x',rx:0.64,ry:0.76},
+            {char:'o',rx:0.16,ry:0.45},{char:'p',rx:0.78,ry:0.62},
+            {char:'g',rx:0.32,ry:0.38},{char:'i',rx:0.55,ry:0.82},
+            {char:'f',rx:0.88,ry:0.52},{char:'r',rx:0.24,ry:0.82},
+            {char:'k',rx:0.68,ry:0.18},{char:'y',rx:0.48,ry:0.28},
+            {char:'w',rx:0.82,ry:0.78},{char:'m',rx:0.14,ry:0.68}
+        ];
+
+        const MARGIN_COLS = {
+            left1: ['r','u','r','f','d','t','g','v','e','r','f','o','p','l','a','m','j','h','u','t','y','f','r','e','d','b','h','j','o','p'],
+            left2: ['d','e','i','k','x','a','o','o','d','o','o','c','o','o','o','a','b','x','m','m','z','z','z','z','b','b','b','b','p','f'],
+            right1: ['u','x','e','r','f','d','g','u','e','r','f','o','p','l','m','n','h','g','i','j','w','p','o','f','k','l','m','n','b','v'],
+            right2: ['a','b','c','m','m','z','z','e','r','h','m','w','b','n','v','a','j','i','p','f','e','e','e','t','t','y','y','k','k','k']
+        };
+
+        // =========================================================================
+        // PHILOSOPHICAL & POETIC CORPUS (Sam Winston - A Dictionary Story inspired)
+        // =========================================================================
+
+        const PHILOSOPHICAL_CORPUS = [
+            {
+                author: "GIACOMO LEOPARDI",
+                work: "L'INFINITO (1819)",
+                text: "Sempre caro mi fu quest'ermo colle, e questa siepe, che da tanta parte dell'ultimo orizzonte il guardo esclude. Ma sedendo e mirando, interminati spazi di la da quella, e sovrumani silenzi, e profondissima quiete io nel pensier mi fingo; ove per poco il cor non si spaura. E come il vento odo stormir tra queste piante, io quello infinito silenzio a questa voce vo comparando: e mi sovvien l'eterno, e le morte stagioni, e la presente e viva, e il suon di lei. Cosi tra questa immensita s'annega il pensier mio: e il naufragar m'e dolce in questo mare. Sempre caro colle siepe orizzonte spazi silenzi quiete vento eterno stagioni immensita naufragar."
+            },
+            {
+                author: "ARTHUR RIMBAUD",
+                work: "LE BATEAU IVRE (1871)",
+                text: "Comme je descendais des Fleuves impassibles, Je ne me sentis plus guide par les haleurs. Et des lors, je me suis baigne dans le Poeme De la Mer, infuse d'astres, et lactescent, Devorant les azurs verts; ou, flottaison bleme Et ravie, un noye pensif parfois descend; Ou, teignant tout a coup les bleuites, delires Et rythmes lents sous les rutilements du jour, Plus fortes que l'alcool, plus vastes que nos lyres, Fermentent les rousseurs ameres de l'amour! Fleuves marins astres poeme azurs delires extase vigueur cataractes gouffres."
+            },
+            {
+                author: "FRIEDRICH NIETZSCHE",
+                work: "ALSO SPRACH ZARATHUSTRA (1883)",
+                text: "Ich lehre euch den Uebermenschen. Der Mensch ist Etwas, das ueberwunden werden soll. Was habt ihr gethan, ihn zu ueberwinden? Ich sage euch: man muss noch Chaos in sich haben, um einen tanzenden Stern gebaeren zu koennen. Der Mensch ist ein Seil, geknuepft zwischen Thier und Uebermensch, ein Seil ueber einem Abgrunde. Bleibt der Erde treu, meine Brueder, mit der Macht eurer Tugend! Ein gefaehrliches Hinueber, ein gefaehrliches Auf-dem-Wege, ein gefaehrliches Zurueckblicken, ein tanzender Stern im Chaos des Geistes."
+            },
+            {
+                author: "LUDWIG WITTGENSTEIN",
+                work: "TRACTATUS LOGICO-PHILOSOPHICUS (1921)",
+                text: "Die Welt ist alles, was der Fall ist. Die Welt ist die Gesamtheit der Tatsachen, nicht der Dinge. Wir machen uns Bilder der Tatsachen. Die Grenzen meiner Sprache bedeuten die Grenzen meiner Welt. Die Logik erfuellt die Welt; die Grenzen der Welt sind auch ihre Grenzen. Nicht wie die Welt ist, ist das Mystische, sondern dass sie ist. Der Sinn der Welt muss ausserhalb ihrer liegen. Wovon man nicht sprechen kann, darueber muss man schweigen. Tatsachen Sachverhalte Bilder Sprache Grenzen Schweigen."
+            },
+            {
+                author: "HUGO BALL",
+                work: "KARAWANE & SOUND POETRY (1916)",
+                text: "Ha! Ha! Ha! Ha! a! Ha! Ha! Ha! Ha! Ha! Ha! Ha! Ha! Ha! Ha! Ha! a a a a a a Ha! Ha! Ha! Ha! Ha! Ha! Ha! ! a a ! Ha! H ! Ha! Ha! Ha! Ha! Ha! Ha! a a a a a a ! H a! Ha! jolifanto bambla o falli bambla grossiga m'pfa habla horem egiga goramen higo bloiko russula huju ha ha ha hollaka hollaka anikepu da duma tumba ba-umf zun blam blam ba-umf a! a! Ha! Ha! Ha! Ha! Ha! Ha! a a a a a a Ha! Ha! !"
+            }
+        ];
+
+        for (let i = 0; i < PHILOSOPHICAL_CORPUS.length; i++) {
+            PHILOSOPHICAL_CORPUS[i].tokens = PHILOSOPHICAL_CORPUS[i].text.split(/\s+/).filter(Boolean);
+        }
+
+        function getTrackCorpus(title, duration) {
+            let hash = 0;
+            const seed = (title || "SCORE") + "_" + Math.round((duration || 120) * 10);
+            for (let i = 0; i < seed.length; i++) {
+                hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+                hash |= 0;
+            }
+            const idx = Math.abs(hash) % PHILOSOPHICAL_CORPUS.length;
+            return PHILOSOPHICAL_CORPUS[idx];
+        }
+
+        function updateBottomTitle() {
+            const cs = AppState.systems[AppState.currentSystemIndex];
+            if (cs === "IMPRINT-SCANLINE") {
+                DOM.uiBottomTitle.textContent = "CONCRETE TYPOGRAPHIC SOUNDGRAPH // IMPRINT KINETIC SCANLINE";
+            } else if (cs === "DISMAL-DLA") {
+                DOM.uiBottomTitle.textContent = "GENERATIVE TYPEFACE // DISMAL DIFFUSION-LIMITED AGGREGATION";
+            } else {
+                const corpus = getTrackCorpus(AppState.trackTitle, AppState.songProfile ? AppState.songProfile.duration : 0);
+                DOM.uiBottomTitle.textContent = `POETIC DISINTEGRATION // ${corpus.author}: ${corpus.work}`;
+            }
+        }
+
+
+        const MAX_POINTS = 300;
+        const P_X = new Float32Array(MAX_POINTS);
+        const P_Y = new Float32Array(MAX_POINTS);
+        const P_ELEV = new Float32Array(MAX_POINTS);
+
+        const smoothFreq = new Float32Array(512);
+        const smoothTime = new Float32Array(512);
+        const _rawFreq = new Uint8Array(512);
+        const _rawTime = new Uint8Array(512);
+
+        // =========================================================================
+        // INTERPOLAZIONE BILINEARE FONDATA SUI PIXEL DELL'IMMAGINE
+        // =========================================================================
+
+        function getInterpolatedPixelDarkness(normX, normI) {
+            const grid = AppState.imageLuminanceGrid;
+            if (!grid) return 0;
+            const N = AppState.pixelGridSize; // 36
+
+            // normI (riga verticale da 0 a 1) -> riga immagine da 0 a N-1
+            const rExact = Math.max(0, Math.min(N - 1, normI * (N - 1)));
+            const r0 = Math.floor(rExact);
+            const r1 = Math.min(N - 1, r0 + 1);
+            const rFrac = rExact - r0;
+
+            // normX (colonna orizzontale da 0 a 1) -> colonna immagine da 0 a N-1
+            const cExact = Math.max(0, Math.min(N - 1, normX * (N - 1)));
+            const c0 = Math.floor(cExact);
+            const c1 = Math.min(N - 1, c0 + 1);
+            const cFrac = cExact - c0;
+
+            // Smoothstep per evitare artefatti a gradino
+            const tr = rFrac * rFrac * (3 - 2 * rFrac);
+            const tc = cFrac * cFrac * (3 - 2 * cFrac);
+
+            const lum00 = grid[r0][c0];
+            const lum01 = grid[r0][c1];
+            const lum10 = grid[r1][c0];
+            const lum11 = grid[r1][c1];
+
+            const topRow = lum00 * (1 - tc) + lum01 * tc;
+            const botRow = lum10 * (1 - tc) + lum11 * tc;
+            const lum = topRow * (1 - tr) + botRow * tr;
+
+            // Darkness: 1.0 = nero puro (massima energia), 0.0 = bianco puro (silenzio)
+            return Math.max(0, Math.min(1.0, 1.0 - lum));
+        }
+
+        // =========================================================================
+        // SCALA MUSICALE & NOTE TOUCHDESIGNER
+        // =========================================================================
+
+        const NOTE_TABLE = [
+            { name: 'D7', freq: 2349.3, desc: 'ULTRA HIGH' },
+            { name: 'C7', freq: 2093.0, desc: 'HIGH REGISTER' },
+            { name: 'B6', freq: 1975.5, desc: 'HIGH REGISTER' },
+            { name: 'A#6', freq: 1864.7, desc: 'HIGH PITCH' },
+            { name: 'A6', freq: 1760.0, desc: 'HIGH PITCH' }, // Row 04
+            { name: 'G6', freq: 1568.0, desc: 'HIGH REGISTER' },
+            { name: 'F6', freq: 1396.9, desc: 'HIGH REGISTER' },
+            { name: 'E6', freq: 1318.5, desc: 'MID-HIGH' },
+            { name: 'D6', freq: 1174.7, desc: 'MID-HIGH' },
+            { name: 'C6', freq: 1046.5, desc: 'MID-HIGH' },
+            { name: 'B5', freq: 987.8, desc: 'MID REGISTER' },
+            { name: 'A5', freq: 880.0, desc: 'MID REGISTER' },
+            { name: 'G5', freq: 784.0, desc: 'MID REGISTER' },
+            { name: 'F5', freq: 698.5, desc: 'MID REGISTER' },
+            { name: 'E5', freq: 659.3, desc: 'MID REGISTER' },
+            { name: 'D5', freq: 587.3, desc: 'MID REGISTER' },
+            { name: 'C5', freq: 523.3, desc: 'MID-LOW' },
+            { name: 'B4', freq: 493.9, desc: 'MID-LOW' },
+            { name: 'A4', freq: 440.0, desc: 'CONCERT A' },
+            { name: 'G4', freq: 392.0, desc: 'MID-LOW' },
+            { name: 'F4', freq: 349.2, desc: 'LOW-MID' },
+            { name: 'E4', freq: 329.6, desc: 'LOW-MID' },
+            { name: 'D4', freq: 293.7, desc: 'LOW-MID' },
+            { name: 'C4', freq: 261.6, desc: 'MIDDLE C' },
+            { name: 'B3', freq: 246.9, desc: 'BASS-MID' },
+            { name: 'A3', freq: 220.0, desc: 'BASS-MID' },
+            { name: 'G3', freq: 196.0, desc: 'WARM BASS' },
+            { name: 'F3', freq: 174.6, desc: 'WARM BASS' },
+            { name: 'E3', freq: 164.8, desc: 'DEEP BASS' },
+            { name: 'D3', freq: 146.8, desc: 'DEEP BASS' },
+            { name: 'C3', freq: 130.8, desc: 'DEEP BASS' },
+            { name: 'A2', freq: 110.0, desc: 'SUB BASS' },
+            { name: 'G2', freq: 98.0, desc: 'SUB BASS' },
+            { name: 'F2', freq: 87.3, desc: 'SUB BASS' },
+            { name: 'E2', freq: 82.4, desc: 'SUB BASS' },
+            { name: 'D2', freq: 73.4, desc: 'ULTRA SUB' }
+        ];
+
+        function getNoteExplanation(row, totalRows) {
+            const idx = Math.max(0, Math.min(NOTE_TABLE.length - 1, row));
+            const note = NOTE_TABLE[idx];
+            return {
+                name: note.name,
+                freq: note.freq,
+                desc: note.desc,
+                registerDesc: note.desc,
+                rowNorm: 1.0 - (idx / (NOTE_TABLE.length - 1))
+            };
+        }
+
+        let touchCarrier = null;
+        let touchModulator = null;
+        let touchMetallic = null;
+        let touchGain = null;
+        let touchModGain = null;
+        let touchMetalGain = null;
+
+        function playTouchSynth(freq, darkness) {
+            initAudioContext();
+            if (AppState.audioCtx.state !== 'running') {
+                try { AppState.audioCtx.resume(); } catch (e) {}
+            }
+            const now = AppState.audioCtx.currentTime;
+
+            if (!touchCarrier) {
+                touchCarrier = AppState.audioCtx.createOscillator();
+                touchModulator = AppState.audioCtx.createOscillator();
+                touchMetallic = AppState.audioCtx.createOscillator();
+                touchGain = AppState.audioCtx.createGain();
+                touchModGain = AppState.audioCtx.createGain();
+                touchMetalGain = AppState.audioCtx.createGain();
+
+                // Aphex Twin "diskhat1" / CCAI pt2 prepared acoustic-metallic resonance
+                touchCarrier.type = 'triangle';
+                touchModulator.type = 'sine';
+                touchMetallic.type = 'square';
+
+                touchModGain.gain.setValueAtTime(0, now);
+                touchMetalGain.gain.setValueAtTime(0, now);
+                touchGain.gain.setValueAtTime(0, now);
+
+                touchModulator.connect(touchModGain);
+                touchModGain.connect(touchCarrier.frequency);
+                touchMetallic.connect(touchMetalGain);
+                touchMetalGain.connect(touchCarrier.frequency);
+
+                touchCarrier.connect(touchGain);
+                touchGain.connect(AppState.analyserNode);
+                touchGain.connect(AppState.audioCtx.destination);
+
+                touchCarrier.start();
+                touchModulator.start();
+                touchMetallic.start();
+            }
+
+            // Inharmonic prepared-piano / solenoid cymbal ratios (diskhat1 style)
+            touchCarrier.frequency.setTargetAtTime(freq, now, 0.008);
+            touchModulator.frequency.setTargetAtTime(freq * 2.138, now, 0.008);
+            touchMetallic.frequency.setTargetAtTime(freq * 3.414, now, 0.008);
+
+            touchModGain.gain.setTargetAtTime(freq * (0.45 + darkness * 2.6), now, 0.012);
+            touchMetalGain.gain.setTargetAtTime(freq * (darkness > 0.45 ? darkness * 1.35 : 0.08), now, 0.010);
+
+            const targetVol = Math.max(0.10, Math.min(0.55, 0.12 + darkness * 0.45));
+            touchGain.gain.cancelScheduledValues(now);
+            touchGain.gain.setValueAtTime(targetVol, now);
+            touchGain.gain.setTargetAtTime(targetVol * 0.38, now + 0.018, 0.045);
+
+            AppState.time += 0.035;
+        }
+
+        function stopTouchSynth() {
+            if (touchGain && AppState.audioCtx) {
+                const now = AppState.audioCtx.currentTime;
+                touchGain.gain.setTargetAtTime(0, now, 0.05);
+            }
+        }
+
+        // =========================================================================
+        // WEB AUDIO ENGINE
+        // =========================================================================
+
+        function initAudioContext() {
+            if (!AppState.audioCtx) {
+                const AC = window.AudioContext || window.webkitAudioContext;
+                AppState.audioCtx = new AC();
+                AppState.analyserNode = AppState.audioCtx.createAnalyser();
+                AppState.analyserNode.fftSize = 1024;
+                AppState.analyserNode.smoothingTimeConstant = 0.82;
+                AppState.gainNode = AppState.audioCtx.createGain();
+                AppState.gainNode.gain.setValueAtTime(1.0, AppState.audioCtx.currentTime);
+                AppState.gainNode.gain.value = 1.0;
+                AppState.analyserNode.connect(AppState.gainNode);
+                AppState.gainNode.connect(AppState.audioCtx.destination);
+            }
+        }
+
+        let audioHardwarePrimed = false;
+        function unlockAudio() {
+            if (!AppState.audioCtx) initAudioContext();
+            if (!AppState.audioCtx) return Promise.resolve();
+            // Mantiene attivo il canale hardware CoreAudio/WebKit anche durante l'apertura del Finder macOS
+            if (!audioHardwarePrimed) {
+                try {
+                    const sr = AppState.audioCtx.sampleRate || 44100;
+                    const silentBuf = AppState.audioCtx.createBuffer(1, Math.floor(sr * 0.1), sr);
+                    const silentSrc = AppState.audioCtx.createBufferSource();
+                    const silentGain = AppState.audioCtx.createGain();
+                    silentGain.gain.value = 0.00001;
+                    silentSrc.buffer = silentBuf;
+                    silentSrc.loop = true;
+                    silentSrc.connect(silentGain);
+                    silentGain.connect(AppState.audioCtx.destination);
+                    silentSrc.start(0);
+                    audioHardwarePrimed = true;
+                } catch (e) {}
+            }
+            if (AppState.audioCtx.state !== 'running') {
+                return AppState.audioCtx.resume().catch(() => {});
+            }
+            return Promise.resolve();
+        }
+        ['pointerdown', 'pointerup', 'click', 'keydown', 'touchstart'].forEach(evt => {
+            window.addEventListener(evt, () => {
+                unlockAudio();
+                if (AppState.isPlayingAudio && AppState.audioCtx && AppState.audioCtx.state !== 'running') {
+                    AppState.audioCtx.resume().catch(() => {});
+                }
+            }, { passive: true });
+        });
+        window.addEventListener('pointermove', () => {
+            if (AppState.isPlayingAudio && AppState.audioCtx && AppState.audioCtx.state !== 'running') {
+                AppState.audioCtx.resume().catch(() => {});
+            }
+        }, { passive: true });
+
+        function extractSongProfile(buffer) {
+            const rawData = buffer.getChannelData(0);
+            const totalSamples = rawData.length;
+            const sampleRate = buffer.sampleRate;
+            const duration = buffer.duration;
+            const channels = buffer.numberOfChannels;
+            const numBands = 64;
+            const numSlices = 140;
+            const timeSliceSize = Math.floor(totalSamples / numSlices);
+            const matrix = [];
+
+            for (let b = 0; b < numBands; b++) matrix[b] = new Float32Array(numSlices);
+
+            let totalZcr = 0;
+            for (let s = 0; s < numSlices; s++) {
+                const start = s * timeSliceSize;
+                const end = Math.min(start + timeSliceSize, totalSamples);
+                const sliceLen = end - start;
+                if (sliceLen <= 0) continue;
+                let sliceSumSq = 0, zcr = 0, prevSign = rawData[start] >= 0;
+                const subStep = Math.max(1, Math.floor(sliceLen / 800));
+                let count = 0;
+                for (let i = start; i < end; i += subStep) {
+                    const v = rawData[i];
+                    sliceSumSq += v * v;
+                    const sign = v >= 0;
+                    if (sign !== prevSign) { zcr++; prevSign = sign; }
+                    count++;
+                }
+                const sliceRms = Math.sqrt(sliceSumSq / (count || 1));
+                const zcrNorm = count > 0 ? (zcr / count) : 0;
+                totalZcr += zcrNorm;
+                for (let b = 0; b < numBands; b++) {
+                    const normB = b / (numBands - 1);
+                    const freqDist = Math.abs(normB - (zcrNorm * 1.25));
+                    const bandWeight = Math.exp(-freqDist * freqDist * 6.5);
+                    const phaseSample = Math.abs(rawData[Math.floor(start + (b / numBands) * sliceLen * 0.45)] || 0);
+                    matrix[b][s] = Math.min(1.0, sliceRms * 3.0 * (0.7 + bandWeight * 2.2 + phaseSample * 1.5));
+                }
+            }
+            return { sampleRate, duration, channels, numBands, numSlices, matrix, spectralCentroid: totalZcr / numSlices };
+        }
+
+        // =========================================================================
+        // AUDIO PLAYBACK ENGINE: GESTIONE FEDELE DI PAUSA E RESUME
+        // =========================================================================
+
+        let audioPlaybackStartTime = 0;
+        let audioPausedOffset = 0;
+
+        DOM.loadAudioTrigger.addEventListener('click', () => {
+            unlockAudio();
+            DOM.audioInput.value = '';
+            DOM.audioInput.click();
+        });
+
+        DOM.audioInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            await unlockAudio();
+            showToast('DECODING AUDIO STREAM...');
+            AppState.sourceType = 'AUDIO';
+            AppState.trackTitle = file.name.toUpperCase();
+            updateBottomTitle();
+            DOM.uiTrackName.textContent = AppState.trackTitle;
+            DOM.uiStatusText.textContent = 'Audio stream ready.';
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                AppState.audioBuffer = await AppState.audioCtx.decodeAudioData(arrayBuffer);
+                AppState.songProfile = extractSongProfile(AppState.audioBuffer);
+                updateBottomTitle();
+                const mins = Math.floor(AppState.songProfile.duration / 60);
+                const secs = Math.floor(AppState.songProfile.duration % 60);
+                AppState.technicalMeta = `AUDIO SOURCE: ${AppState.songProfile.sampleRate} HZ // DUR: ${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')} // CH: ${AppState.songProfile.channels} // FFT 2048`;
+                DOM.uiTechnicalData.textContent = AppState.technicalMeta;
+                DOM.playTrigger.style.display = 'inline-block';
+                DOM.playTrigger.textContent = '[ PLAY AUDIO ]';
+                DOM.centerImageContainer.style.display = 'none';
+                audioPausedOffset = 0;
+                await startAudioPlayback(0);
+                showToast(`ACTIVE STREAM: ${AppState.systems[AppState.currentSystemIndex]}`);
+            } catch (err) {
+                console.error('Audio decode error:', err);
+                showToast('AUDIO DECODE ERROR');
+            }
+        });
+
+        async function startAudioPlayback(offset = 0) {
+            if (!AppState.audioBuffer) return;
+            initAudioContext();
+            if (AppState.audioCtx.state !== 'running') {
+                try { await AppState.audioCtx.resume(); } catch(e) {}
+            }
+            if (AppState.audioSourceNode) {
+                try { AppState.audioSourceNode.stop(); } catch(e) {}
+                try { AppState.audioSourceNode.disconnect(); } catch(e) {}
+            }
+            AppState.audioSourceNode = AppState.audioCtx.createBufferSource();
+            AppState.audioSourceNode.buffer = AppState.audioBuffer;
+            AppState.audioSourceNode.loop = true;
+
+            // Doppio collegamento diretto: analyserNode -> gainNode -> destination + gainNode diretto
+            AppState.audioSourceNode.connect(AppState.analyserNode);
+            AppState.audioSourceNode.connect(AppState.gainNode);
+            AppState.gainNode.gain.cancelScheduledValues(0);
+            AppState.gainNode.gain.setValueAtTime(1.0, AppState.audioCtx.currentTime);
+            AppState.gainNode.gain.value = 1.0;
+
+            const safeOffset = AppState.audioBuffer.duration > 0 ? (offset % AppState.audioBuffer.duration) : 0;
+            AppState.audioSourceNode.start(0, safeOffset);
+            audioPlaybackStartTime = AppState.audioCtx.currentTime - safeOffset;
+
+            AppState.isPlayingAudio = true;
+            DOM.playTrigger.textContent = '[ PAUSE AUDIO ]';
+            DOM.uiStatusText.textContent = 'Audio playing.';
+        }
+
+        function pauseAudioPlayback() {
+            if (!AppState.isPlayingAudio) return;
+            if (AppState.audioSourceNode && AppState.audioBuffer) {
+                audioPausedOffset = (AppState.audioCtx.currentTime - audioPlaybackStartTime) % AppState.audioBuffer.duration;
+                try { AppState.audioSourceNode.stop(); } catch(e) {}
+            }
+            AppState.isPlayingAudio = false;
+            DOM.playTrigger.textContent = '[ RESUME AUDIO ]';
+            DOM.uiStatusText.textContent = 'Audio paused.';
+        }
+
+        async function toggleAudioPlayback() {
+            if (!AppState.audioBuffer) return;
+            await unlockAudio();
+            if (AppState.isPlayingAudio) {
+                pauseAudioPlayback();
+            } else {
+                await startAudioPlayback(audioPausedOffset);
+            }
+        }
+
+        DOM.playTrigger.addEventListener('click', () => { toggleAudioPlayback(); });
+
+        // =========================================================================
+        // IMAGE TO SOUND: APHEX TWIN "diskhat1" (CCAI PT2) ELECTRO-ACOUSTIC ENGINE
+        // =========================================================================
+
+        function normalizeLuminanceGrid(grid) {
+            const values = [];
+            for (let y = 0; y < grid.length; y++) {
+                for (let x = 0; x < grid[y].length; x++) values.push(grid[y][x]);
+            }
+            values.sort((a, b) => a - b);
+            const lo = values[Math.floor(values.length * 0.02)];
+            const hi = values[Math.floor(values.length * 0.98)];
+            if (hi - lo < 0.04) return grid; // immagine uniforme: nessun contrasto da espandere
+            const range = hi - lo;
+            for (let y = 0; y < grid.length; y++) {
+                for (let x = 0; x < grid[y].length; x++) {
+                    grid[y][x] = Math.max(0, Math.min(1, (grid[y][x] - lo) / range));
+                }
+            }
+            return grid;
+        }
+
+        function sonifyImageGrid(grid, sampleRate) {
+            const rows = grid.length; // 36
+            const cols = grid[0].length; // 36
+            // Aphex Twin "diskhat1" (Computer Controlled Acoustic Instruments pt2)
+            // Mechanical breakbeat & prepared Disklavier tempo: ~136 BPM (0.110s per 16th step)
+            const stepDuration = 0.110;
+            const duration = cols * stepDuration;
+            const totalSamples = Math.floor(sampleRate * duration);
+            const buffer = new Float32Array(totalSamples);
+
+            // Studio room early-reflection comb lines (tight acoustic room, 19ms & 37ms)
+            const roomDelay1 = Math.max(1, Math.floor(sampleRate * 0.019));
+            const roomDelay2 = Math.max(1, Math.floor(sampleRate * 0.037));
+            const roomBuf1 = new Float32Array(roomDelay1);
+            const roomBuf2 = new Float32Array(roomDelay2);
+            let rIdx1 = 0, rIdx2 = 0;
+
+            // 6 inharmonic metallic modes for the solenoid-actuated "diskhat" hi-hat/cymbal matrix
+            const hatRatios = [1.0, 1.342, 1.665, 2.138, 2.793, 3.414];
+            const hatPhases = new Float64Array(6);
+
+            // Prepared Disklavier / Tack-Piano string phases (up to 3 simultaneous chord notes per step)
+            const pianoPhases1 = new Float64Array(3);
+            const pianoPhases2 = new Float64Array(3);
+            const pianoTackPhases = new Float64Array(3);
+
+            // Prepared low piano / bass string state
+            let bassPhase1 = 0;
+            let bassPhase2 = 0;
+            let bassSvfLp = 0;
+            let bassSvfBp = 0;
+            let currentBassFreq = 55.0;
+
+            // Deterministic PRNG for repeatable crisp metallic & snare wire transients
+            let rngState = 0x6D2B79F5;
+            const nextNoise = () => {
+                rngState = (rngState * 1664525 + 1013904223) >>> 0;
+                return (rngState / 2147483648.0) - 1.0;
+            };
+
+            let prevHatSample = 0;
+
+            for (let c = 0; c < cols; c++) {
+                const stepStartSample = Math.floor(c * stepDuration * sampleRate);
+                const stepEndSample = Math.floor((c + 1) * stepDuration * sampleRate);
+                const stepLen = stepEndSample - stepStartSample;
+
+                // Analisi energetica delle 3 bande verticali dei pixel (Alti: 0..11, Medi: 12..25, Bassi: 26..35)
+                let highSum = 0, midSum = 0, bassSum = 0;
+                let brightestRowHigh = 0, maxHighDark = 0;
+                for (let r = 0; r < rows; r++) {
+                    const d = 1.0 - grid[r][c];
+                    if (r < 12) {
+                        highSum += d;
+                        if (d > maxHighDark) { maxHighDark = d; brightestRowHigh = r; }
+                    } else if (r < 26) {
+                        midSum += d;
+                    } else {
+                        bassSum += d;
+                    }
+                }
+                const highLevel = highSum / 12;
+                const midLevel = midSum / 14;
+                const bassLevel = bassSum / 10;
+
+                // Contrasto orizzontale con la colonna precedente (controlla i ratchet dei solenoidi e i rimshot)
+                const prevCol = (c - 1 + cols) % cols;
+                let colContrast = 0;
+                for (let r = 0; r < rows; r++) {
+                    colContrast += Math.abs(grid[r][c] - grid[r][prevCol]);
+                }
+                const normContrast = colContrast / rows;
+
+                // 1. SOLENOID "DISKHAT" METALLIC CYMBAL / HI-HAT (Rows 0..11)
+                // Base frequency modulata dalla riga più scura in fascia alta; apertura pedale dal livello medio-alto
+                const hatBaseFreq = 340 + (11 - brightestRowHigh) * 48 + (c % 3) * 19;
+                const hatOpenDecay = 14 + (1.0 - Math.min(0.88, highLevel * 0.9 + (c % 4 === 2 ? 0.35 : 0))) * 46;
+                // Micro-ratchet meccanico del solenoide (1, 2, 3 o 4 colpi rapidi nello step)
+                const hatSubdiv = normContrast > 0.24 ? 4 : (normContrast > 0.14 || c % 6 === 5 ? 3 : (highLevel > 0.35 && c % 2 === 1 ? 2 : 1));
+                const hatSubLen = Math.max(1, Math.floor(stepLen / hatSubdiv));
+                const hatVel = Math.max(0.18, Math.min(0.95, 0.22 + highLevel * 0.85 + normContrast * 0.4));
+
+                // 2. PREPARED DISKLAVIER / TACK-PIANO CHORD NOTES (Rows 12..25)
+                // Seleziona le 3 righe più scure nella fascia centrale per accordi/arpeggi meccanici
+                const topMidRows = [14 + (c % 8), 18 + ((c * 3) % 7), 22 + ((c * 5) % 4)];
+                const topMidDarks = [0.14, 0.10, 0.08];
+                for (let r = 12; r < 26; r++) {
+                    const d = 1.0 - grid[r][c];
+                    if (d > topMidDarks[0]) {
+                        topMidRows[2] = topMidRows[1]; topMidDarks[2] = topMidDarks[1];
+                        topMidRows[1] = topMidRows[0]; topMidDarks[1] = topMidDarks[0];
+                        topMidRows[0] = r; topMidDarks[0] = d;
+                    } else if (d > topMidDarks[1]) {
+                        topMidRows[2] = topMidRows[1]; topMidDarks[2] = topMidDarks[1];
+                        topMidRows[1] = r; topMidDarks[1] = d;
+                    } else if (d > topMidDarks[2]) {
+                        topMidRows[2] = r; topMidDarks[2] = d;
+                    }
+                }
+                // Micro-offset temporale stile arpeggio meccanico Disklavier (0ms, 18ms, 36ms)
+                const pianoOffsets = [0, Math.floor(stepLen * 0.33), Math.floor(stepLen * 0.66)];
+
+                // 3. PREPARED LOW PIANO STRING & DAMPED ACOUSTIC KICK / SNARE (Rows 26..35)
+                let activeBassRow = 28 + (c % 6);
+                let maxBassDarkness = 0.16;
+                for (let r = 26; r < rows; r++) {
+                    const d = 1.0 - grid[r][c];
+                    if (d > maxBassDarkness) {
+                        maxBassDarkness = d;
+                        activeBassRow = r;
+                    }
+                }
+                const targetBassFreq = NOTE_TABLE[activeBassRow].freq;
+                currentBassFreq = targetBassFreq;
+
+                // Groove breakbeat sincopato stile "diskhat1" guidato dalla matrice pixel
+                const isSyncopatedKick = (c % 8 === 0) || (c % 8 === 3 && bassLevel > 0.15) || (c % 8 === 6 && normContrast > 0.12) || (bassLevel > 0.38);
+                const isSnareRim = (c % 8 === 2) || (c % 8 === 5 && midLevel > 0.18) || (normContrast > 0.19 && c % 2 === 1);
+                const isGhostSnare = !isSnareRim && (midLevel > 0.25 || normContrast > 0.11) && (c % 3 === 1);
+
+                let kickPhase = 0;
+                let beaterPhase = 0;
+                let snareBodyPhase = 0;
+                let rimPhase = 0;
+
+                for (let s = 0; s < stepLen; s++) {
+                    const globalSampleIdx = stepStartSample + s;
+                    if (globalSampleIdx >= totalSamples) break;
+
+                    const tInStep = s / sampleRate;
+                    const sInHatSub = s % hatSubLen;
+                    const tInHatSub = sInHatSub / sampleRate;
+                    const subIdx = Math.floor(s / hatSubLen);
+
+                    let sample = 0;
+
+                    // A. SOLENOID "DISKHAT" METALLIC HI-HAT / CYMBAL MATRIX
+                    {
+                        const ratchetScale = subIdx === 0 ? 1.0 : (0.68 / Math.sqrt(subIdx + 1));
+                        const hatEnv = Math.exp(-tInHatSub * hatOpenDecay) * hatVel * ratchetScale;
+                        const strikeClick = Math.exp(-tInHatSub * 260) * 0.55;
+
+                        let metalSum = 0;
+                        for (let m = 0; m < 6; m++) {
+                            const mf = hatBaseFreq * hatRatios[m] * (1.0 + 0.015 * subIdx);
+                            hatPhases[m] += (2 * Math.PI * mf) / sampleRate;
+                            if (hatPhases[m] > 6.2831853) hatPhases[m] -= 6.2831853;
+                            // Modulazione ring-metallic tra parziali adiacenti
+                            const sq = Math.sin(hatPhases[m]) >= 0 ? 0.7 : -0.7;
+                            metalSum += (Math.sin(hatPhases[m]) * 0.6 + sq * 0.4);
+                        }
+                        const noiseVal = nextNoise();
+                        const rawHat = (metalSum * 0.22 + noiseVal * (0.48 + strikeClick));
+                        // High-pass crisp filter per la brillantezza metallica del charleston meccanico
+                        const hpHat = rawHat - prevHatSample * 0.84;
+                        prevHatSample = rawHat;
+                        sample += hpHat * hatEnv * 0.34;
+                    }
+
+                    // B. DAMPED ACOUSTIC BASS DRUM + WOODEN SOLENOID BEATER
+                    if (isSyncopatedKick) {
+                        const kickPitch = 49 + 115 * Math.exp(-tInStep * 52);
+                        const beaterPitch = 215 + 190 * Math.exp(-tInStep * 110);
+                        kickPhase += (2 * Math.PI * kickPitch) / sampleRate;
+                        beaterPhase += (2 * Math.PI * beaterPitch) / sampleRate;
+
+                        const kickEnv = Math.exp(-tInStep * 17) * (0.55 + bassLevel * 0.45);
+                        const beaterEnv = Math.exp(-tInStep * 95) * 0.42;
+                        const woodenClick = Math.sin(beaterPhase) * beaterEnv;
+                        sample += (Math.sin(kickPhase) * 0.78 + woodenClick) * kickEnv * 0.62;
+                    }
+
+                    // C. MECHANICAL SOLENOID SNARE & WOODEN RIMSHOT
+                    if (isSnareRim || isGhostSnare) {
+                        const vel = isSnareRim ? (0.52 + normContrast * 0.45) : 0.24;
+                        const snarePitch = 192 + 95 * Math.exp(-tInStep * 65);
+                        const rimPitch = 468 + 140 * Math.exp(-tInStep * 120);
+                        snareBodyPhase += (2 * Math.PI * snarePitch) / sampleRate;
+                        rimPhase += (2 * Math.PI * rimPitch) / sampleRate;
+
+                        const bodyEnv = Math.exp(-tInStep * 32);
+                        const rimEnv = Math.exp(-tInStep * 85);
+                        const wireEnv = Math.exp(-tInStep * (isSnareRim ? 24 : 42));
+                        const wireNoise = nextNoise() * wireEnv;
+
+                        const snareSig = Math.sin(snareBodyPhase) * bodyEnv * 0.42
+                                       + Math.sin(rimPhase) * rimEnv * 0.38
+                                       + wireNoise * 0.56;
+                        sample += snareSig * vel * 0.45;
+                    }
+
+                    // D. PREPARED DISKLAVIER / TACK-PIANO & MODAL STRUCK STRINGS (Rows 12..25)
+                    for (let v = 0; v < 3; v++) {
+                        const relS = s - pianoOffsets[v];
+                        if (relS < 0) continue;
+                        const tNote = relS / sampleRate;
+                        const dark = topMidDarks[v];
+                        if (dark < 0.06) continue;
+
+                        const freq = NOTE_TABLE[topMidRows[v]].freq;
+                        // Bichord detuned strings + prepared bolt/screw inharmonic partial (f * 2.756)
+                        pianoPhases1[v] += (2 * Math.PI * freq) / sampleRate;
+                        pianoPhases2[v] += (2 * Math.PI * (freq * 1.0018)) / sampleRate;
+                        pianoTackPhases[v] += (2 * Math.PI * (freq * 2.756)) / sampleRate;
+                        if (pianoPhases1[v] > 6.2831853) pianoPhases1[v] -= 6.2831853;
+                        if (pianoPhases2[v] > 6.2831853) pianoPhases2[v] -= 6.2831853;
+                        if (pianoTackPhases[v] > 6.2831853) pianoTackPhases[v] -= 6.2831853;
+
+                        const hammerAttack = 1.0 - Math.exp(-tNote * 420);
+                        const stringDecay = Math.exp(-tNote * (9.5 + v * 2.5));
+                        const tackDecay = Math.exp(-tNote * 48);
+
+                        const tackMod = Math.sin(pianoTackPhases[v]) * tackDecay * (0.45 + dark * 0.85);
+                        const stringWave = Math.sin(pianoPhases1[v] + tackMod) * 0.55
+                                         + Math.sin(pianoPhases2[v]) * 0.30
+                                         + Math.sin(pianoPhases1[v] * 2.0) * 0.15 * Math.exp(-tNote * 18);
+
+                        sample += stringWave * hammerAttack * stringDecay * (0.14 + dark * 0.22);
+                    }
+
+                    // E. PREPARED LOW PIANO / PLUCKED BASS STRING RESONATOR (Rows 26..35)
+                    {
+                        const bassInc = (2 * Math.PI * currentBassFreq) / sampleRate;
+                        bassPhase1 += bassInc;
+                        bassPhase2 += bassInc * 2.002;
+                        if (bassPhase1 > 6.2831853) bassPhase1 -= 6.2831853;
+                        if (bassPhase2 > 6.2831853) bassPhase2 -= 6.2831853;
+
+                        // Corda grave percossa da martelletto meccanico (ricca di armoniche con inviluppo risonante)
+                        const rawString = ((bassPhase1 / Math.PI) - 1.0) * 0.65 + Math.sin(bassPhase2) * 0.35;
+                        const pluckEnv = Math.exp(-tInStep * 11.5);
+                        const cutoff = Math.min(sampleRate * 0.18, 160 + maxBassDarkness * 1450 * pluckEnv + normContrast * 900);
+                        const q = 2.2 + maxBassDarkness * 1.8;
+                        const f = 2 * Math.sin((Math.PI * cutoff) / sampleRate);
+
+                        bassSvfLp += f * bassSvfBp;
+                        const bassSvfHp = rawString - bassSvfLp - (1 / q) * bassSvfBp;
+                        bassSvfBp += f * bassSvfHp;
+
+                        sample += Math.tanh(bassSvfLp * 1.45) * (0.18 + maxBassDarkness * 0.34) * Math.exp(-tInStep * 6.5);
+                    }
+
+                    if (!Number.isFinite(sample)) {
+                        sample = 0;
+                        bassSvfLp = 0;
+                        bassSvfBp = 0;
+                        prevHatSample = 0;
+                    }
+
+                    // F. TIGHT STUDIO ROOM EARLY REFLECTIONS (acustica fisica da stanza CCAI pt2)
+                    const er1 = roomBuf1[rIdx1];
+                    const er2 = roomBuf2[rIdx2];
+                    roomBuf1[rIdx1] = sample + er2 * 0.16;
+                    roomBuf2[rIdx2] = sample - er1 * 0.14;
+                    rIdx1 = (rIdx1 + 1) % roomDelay1;
+                    rIdx2 = (rIdx2 + 1) % roomDelay2;
+
+                    sample = sample * 0.84 + (er1 + er2) * 0.14;
+                    buffer[globalSampleIdx] = sample;
+                }
+            }
+
+            // Master analog console saturation (tanh) & peak normalization (0.84)
+            let maxPeak = 0.001;
+            for (let i = 0; i < totalSamples; i++) {
+                buffer[i] = Math.tanh(buffer[i] * 1.38);
+                const a = Math.abs(buffer[i]);
+                if (a > maxPeak) maxPeak = a;
+            }
+            const norm = 0.84 / maxPeak;
+            for (let i = 0; i < totalSamples; i++) {
+                buffer[i] *= norm;
+            }
+
+            return buffer;
+        }
+
+
+        DOM.loadImageTrigger.addEventListener('click', () => {
+            unlockAudio();
+            DOM.imageInput.value = '';
+            DOM.imageInput.click();
+        });
+
+        DOM.imageInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            await unlockAudio();
+            showToast('PIXEL ANALYSIS & SONIFICATION...');
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = async () => {
+                    AppState.scannedImageObj = img;
+                    const N = AppState.pixelGridSize; // 36x36
+
+                    const off = document.createElement('canvas');
+                    off.width = N; off.height = N;
+                    const octx = off.getContext('2d');
+                    octx.drawImage(img, 0, 0, N, N);
+                    const imgData = octx.getImageData(0, 0, N, N).data;
+
+                    const colorGrid = [];
+                    const lumGrid = [];
+
+                    for (let y = 0; y < N; y++) {
+                        colorGrid[y] = [];
+                        lumGrid[y] = new Float32Array(N);
+                        for (let x = 0; x < N; x++) {
+                            const idx = (y * N + x) * 4;
+                            const r = imgData[idx];
+                            const g = imgData[idx + 1];
+                            const b = imgData[idx + 2];
+                            const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+                            lumGrid[y][x] = lum;
+                            colorGrid[y][x] = { r, g, b, lum };
+                        }
+                    }
+
+                    // AUTO-LIVELLI (come il Level TOP di TouchDesigner):
+                    // la luminanza viene ri-mappata sul range reale della foto (2°–98° percentile),
+                    // così anche una foto molto chiara usa tutta la dinamica e produce suono.
+                    normalizeLuminanceGrid(lumGrid);
+
+                    AppState.rawColorPixels = colorGrid;
+                    AppState.imageLuminanceGrid = lumGrid;
+                    AppState.isMatrixMode = false;
+
+                    // Mostra l'immagine centrale senza cornice
+                    DOM.centerImageContainer.style.display = 'flex';
+                    DOM.centerImageInfoBar.style.display = 'none';
+                    DOM.centerInfoExplanation.style.display = 'none';
+
+                    drawCenterPixelCanvas();
+
+                    DOM.uiStatusText.textContent = 'Sonifying pixel matrix...';
+                    await new Promise(r => setTimeout(r, 40));
+
+                    initAudioContext();
+                    const sampleRate = AppState.audioCtx.sampleRate || 44100;
+                    const pcmData = sonifyImageGrid(lumGrid, sampleRate);
+
+                    const audioBuf = AppState.audioCtx.createBuffer(1, pcmData.length, sampleRate);
+                    audioBuf.getChannelData(0).set(pcmData);
+
+                    AppState.audioBuffer = audioBuf;
+                    AppState.sourceType = 'IMAGE';
+                    AppState.trackTitle = `${file.name.toUpperCase().replace(/\.[^/.]+$/, "")}.`;
+                    AppState.songProfile = extractSongProfile(audioBuf);
+                    updateBottomTitle();
+                    DOM.uiTrackName.textContent = AppState.trackTitle;
+
+                    AppState.technicalMeta = `IMAGE SCAN: ${img.naturalWidth}×${img.naturalHeight} PX // SPATIAL LUMINANCE MATRIX // FFT 2048`;
+                    DOM.uiTechnicalData.textContent = AppState.technicalMeta;
+
+                    DOM.playTrigger.style.display = 'inline-block';
+                    DOM.playTrigger.textContent = '[ PAUSE AUDIO ]';
+                    audioPausedOffset = 0;
+                    await startAudioPlayback(0);
+                    showToast('IMAGE LOADED // AUDIO STREAM ACTIVE');
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // =========================================================================
+        // RENDERING CANVAS CENTRALE: A COLORI/BW A RIPOSO OPPURE TOUCHDESIGNER MATRIX
+        // =========================================================================
+
+        function drawCenterPixelCanvas() {
+            const N = AppState.pixelGridSize; // 36
+            const colors = AppState.rawColorPixels;
+            const lums = AppState.imageLuminanceGrid;
+            if (!colors || !lums) return;
+
+            const W = DOM.centerPixelCanvas.width; // 280
+            const H = DOM.centerPixelCanvas.height;
+            const cellW = W / N;
+            const cellH = H / N;
+
+            ctxCenterPixel.clearRect(0, 0, W, H);
+
+            if (!AppState.isMatrixMode) {
+                // MODALITÀ A RIPOSO: solo pixelata a colori o in bianco/nero originale
+                for (let y = 0; y < N; y++) {
+                    for (let x = 0; x < N; x++) {
+                        const c = colors[y][x];
+                        ctxCenterPixel.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
+                        ctxCenterPixel.fillRect(x * cellW, y * cellH, cellW, cellH);
+                    }
+                }
+            } else {
+                // MODALITÀ TOUCHDESIGNER MATRIX (QUANDO CLICCATA):
+                for (let y = 0; y < N; y++) {
+                    for (let x = 0; x < N; x++) {
+                        const lum = lums[y][x];
+                        ctxCenterPixel.fillStyle = lum < 0.5 ? '#000000' : '#ffffff';
+                        ctxCenterPixel.fillRect(x * cellW, y * cellH, cellW, cellH);
+
+                        ctxCenterPixel.strokeStyle = lum < 0.5 ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
+                        ctxCenterPixel.strokeRect(x * cellW, y * cellH, cellW, cellH);
+                    }
+                }
+
+                // Mirino sul pixel attivo
+                if (AppState.activePixel) {
+                    const px = AppState.activePixel.x;
+                    const py = AppState.activePixel.y;
+                    const lum = lums[py][px];
+
+                    ctxCenterPixel.strokeStyle = '#ff0000';
+                    ctxCenterPixel.lineWidth = 2.0;
+                    ctxCenterPixel.strokeRect(px * cellW, py * cellH, cellW, cellH);
+
+                    ctxCenterPixel.fillStyle = lum < 0.5 ? '#ffffff' : '#000000';
+                    ctxCenterPixel.fillRect(px * cellW + cellW/2 - 1.5, py * cellH + cellH/2 - 1.5, 3, 3);
+                }
+            }
+
+            // Playhead scanner durante la riproduzione sonificata
+            if (AppState.isPlayingAudio && AppState.sourceType === 'IMAGE') {
+                const duration = AppState.audioBuffer ? AppState.audioBuffer.duration : 10;
+                const currentTime = AppState.audioCtx ? (AppState.audioCtx.currentTime - audioPlaybackStartTime) % duration : 0;
+                const scanX = (currentTime / duration) * W;
+                ctxCenterPixel.fillStyle = 'rgba(255, 0, 0, 0.45)';
+                ctxCenterPixel.fillRect(scanX - 1, 0, 2, H);
+            }
+        }
+
+        // =========================================================================
+        // INTERAZIONE AL TOCCO / CLICK: INFO SENZA CORNICE E NOTE MUSICALI
+        // =========================================================================
+
+        let isPointerDownOnCenterImage = false;
+
+        function updatePixelInspection(clientX, clientY) {
+            const rect = DOM.centerPixelCanvas.getBoundingClientRect();
+            const scaleX = DOM.centerPixelCanvas.width / rect.width;
+            const scaleY = DOM.centerPixelCanvas.height / rect.height;
+            const localX = (clientX - rect.left) * scaleX;
+            const localY = (clientY - rect.top) * scaleY;
+
+            const N = AppState.pixelGridSize; // 36
+            const cellW = DOM.centerPixelCanvas.width / N;
+            const cellH = DOM.centerPixelCanvas.height / N;
+
+            const px = Math.max(0, Math.min(N - 1, Math.floor(localX / cellW)));
+            const py = Math.max(0, Math.min(N - 1, Math.floor(localY / cellH)));
+
+            const lum = AppState.imageLuminanceGrid[py][px];
+            const darkness = 1.0 - lum;
+            const darknessPct = (darkness * 100).toFixed(1);
+
+            const noteData = getNoteExplanation(py, N);
+
+            AppState.activePixel = {
+                x: px, y: py,
+                lum: lum,
+                darkness: darkness,
+                note: noteData.name,
+                freq: noteData.freq,
+                registerDesc: noteData.registerDesc
+            };
+
+            // Aggiorna l'info bar SENZA CORNICE (identico alla foto di riferimento):
+            // 9.6 %          [ MODE: MATRIX ]          NOTE: A6 (1760.0Hz)
+            DOM.centerInfoLeft.textContent = `${darknessPct} %`;
+            DOM.centerInfoRight.textContent = `NOTE: ${noteData.name} (${noteData.freq}Hz)`;
+
+            const timeSec = ((px / N) * 10).toFixed(1);
+            const ampEst = (0.2 + darkness * 0.8).toFixed(2);
+            DOM.centerExplainText.textContent = `ROW ${String(py).padStart(2,'0')} → FREQ ${noteData.freq} HZ (${noteData.desc}) • LUM ${(lum * 100).toFixed(1)}% → AMP ${ampEst} • NOTE ${noteData.name}`;
+
+            DOM.centerImageInfoBar.style.display = 'flex';
+            DOM.centerInfoExplanation.style.display = 'block';
+
+            AppState.isMatrixMode = true;
+            drawCenterPixelCanvas();
+
+            playTouchSynth(noteData.freq, darkness);
+        }
+
+        DOM.centerPixelCanvas.addEventListener('pointerdown', (e) => {
+            isPointerDownOnCenterImage = true;
+            DOM.centerPixelCanvas.setPointerCapture(e.pointerId);
+            updatePixelInspection(e.clientX, e.clientY);
+        });
+
+        DOM.centerPixelCanvas.addEventListener('pointermove', (e) => {
+            if (isPointerDownOnCenterImage) {
+                updatePixelInspection(e.clientX, e.clientY);
+            }
+        });
+
+        const releaseCenterTouch = () => {
+            if (isPointerDownOnCenterImage) {
+                isPointerDownOnCenterImage = false;
+                stopTouchSynth();
+            }
+        };
+        DOM.centerPixelCanvas.addEventListener('pointerup', releaseCenterTouch);
+        DOM.centerPixelCanvas.addEventListener('pointercancel', releaseCenterTouch);
+
+        DOM.centerInfoMode.addEventListener('click', (e) => {
+            e.stopPropagation();
+            AppState.isMatrixMode = !AppState.isMatrixMode;
+            DOM.centerInfoMode.textContent = AppState.isMatrixMode ? '[ MODE: MATRIX ]' : '[ MODE: ORIGINAL ]';
+            drawCenterPixelCanvas();
+            showToast(AppState.isMatrixMode ? 'TOUCHDESIGNER B/W MATRIX' : 'ORIGINAL PIXEL MATRIX');
+        });
+
+        window.addEventListener('click', (e) => {
+            if (!DOM.centerImageContainer.contains(e.target) && e.target !== DOM.loadImageTrigger) {
+                if (AppState.sourceType === 'IMAGE' && AppState.isMatrixMode && !AppState.isPlayingAudio) {
+                    AppState.isMatrixMode = false;
+                    DOM.centerInfoMode.textContent = '[ MODE: MATRIX ]';
+                    DOM.centerImageInfoBar.style.display = 'none';
+                    DOM.centerInfoExplanation.style.display = 'none';
+                    drawCenterPixelCanvas();
+                }
+            }
+        });
+
+        // =========================================================================
+        // SELETTORE SISTEMI & UI
+        // =========================================================================
+
+        DOM.systemTrigger.addEventListener('click', () => {
+            AppState.currentSystemIndex = (AppState.currentSystemIndex + 1) % AppState.systems.length;
+            const cs = AppState.systems[AppState.currentSystemIndex];
+            DOM.systemTrigger.textContent = `[ SYSTEM: ${cs} ]`;
+            updateBottomTitle();
+            showToast(`SYSTEM: ${cs}`);
+        });
+
+        DOM.densityTrigger.addEventListener('click', () => {
+            AppState.currentDensityIndex = (AppState.currentDensityIndex + 1) % AppState.densityModes.length;
+            DOM.densityTrigger.textContent = `[ DENSITY: ${AppState.densityModes[AppState.currentDensityIndex]} ]`;
+        });
+
+        DOM.fontTrigger.addEventListener('click', () => {
+            AppState.currentFontIndex = (AppState.currentFontIndex + 1) % AppState.fontModes.length;
+            DOM.fontTrigger.textContent = `[ FONT: ${AppState.fontModes[AppState.currentFontIndex]} ]`;
+        });
+
+        // =========================================================================
+        // RENDER ENGINE
+        // =========================================================================
+
+        function smoothstepVal(edge0, edge1, x) {
+            const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+            return t * t * (3 - 2 * t);
+        }
+
+        function sampleMatrixSmooth(matrix, bandIdx, normX) {
+            if (!matrix || !matrix[bandIdx]) return 0.25;
+            const row = matrix[bandIdx];
+            const nSlices = row.length;
+            if (nSlices <= 1) return row[0] || 0.25;
+            const exact = Math.max(0, Math.min(nSlices - 1, normX * (nSlices - 1)));
+            const s0 = Math.floor(exact);
+            const s1 = Math.min(nSlices - 1, s0 + 1);
+            const frac = exact - s0;
+            return (row[s0] || 0) * (1 - frac) + (row[s1] || 0) * frac;
+        }
+
+        function renderGenerativeSystem(ctx, width, height, timeVal, isHighResExport = false, updateAudioState = true) {
+            const dpr = isHighResExport ? 1 : currentDpr;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, width, height);
+
+            // All'inizio, quando non ci sono né immagine né suono, lo sfondo resta bianco
+            // lasciando visibili solo le scritte in alto e in basso.
+            if (AppState.sourceType === 'NONE') {
+                return;
+            }
+
+            const system = AppState.systems[AppState.currentSystemIndex];
+            const density = AppState.densityModes[AppState.currentDensityIndex];
+            const fontMode = AppState.fontModes[AppState.currentFontIndex];
+            const scale = width / 1440;
+            const fontFamily = fontMode === 'TYPEWRITER'
+                ? '"Courier New", Courier, "Special Elite", "Andale Mono", monospace'
+                : '"Helvetica Neue", Helvetica, Arial, sans-serif';
+
+            const profile = AppState.songProfile;
+            const hasMatrix = profile && profile.matrix;
+
+            let hasAudioData = false;
+            if (AppState.sourceType !== 'NONE') {
+                if (updateAudioState && AppState.audioCtx && AppState.analyserNode && AppState.isPlayingAudio) {
+                    AppState.analyserNode.getByteFrequencyData(_rawFreq);
+                    AppState.analyserNode.getByteTimeDomainData(_rawTime);
+                    let maxRaw = 0;
+                    for (let k = 0; k < 512; k++) {
+                        if (_rawFreq[k] > maxRaw) maxRaw = _rawFreq[k];
+                        const fPrev = _rawFreq[k > 0 ? k - 1 : 0];
+                        const fNext = _rawFreq[k < 511 ? k + 1 : 511];
+                        const fT = (fPrev * 0.22 + _rawFreq[k] * 0.56 + fNext * 0.22) / 255;
+                        smoothFreq[k] += (fT - smoothFreq[k]) * (fT > smoothFreq[k] ? 0.18 : 0.065);
+                        const tT = (_rawTime[k] - 128) / 128;
+                        smoothTime[k] += (tT - smoothTime[k]) * 0.12;
+                    }
+                    // Se l'analyser non ha ancora accumulato campioni (es. primo frame o contesto appena sbloccato),
+                    // popola smoothFreq/smoothTime dalla matrice reale della canzone o immagine
+                    if (maxRaw === 0 && hasMatrix) {
+                        const nBands = profile.matrix.length;
+                        const normT = (timeVal * 0.12) % 1;
+                        for (let k = 0; k < 512; k++) {
+                            const bIdx = Math.min(nBands - 1, Math.floor((k / 512) * nBands));
+                            const mVal = sampleMatrixSmooth(profile.matrix, bIdx, normT);
+                            smoothFreq[k] += (mVal * 0.85 - smoothFreq[k]) * 0.18;
+                            smoothTime[k] = Math.sin(k * 0.12 + timeVal * 2.4) * mVal * 0.35;
+                        }
+                    }
+                }
+                hasAudioData = true;
+            }
+
+            if (system === 'IMPRINT-SCANLINE') {
+                renderImprintScanline(ctx, width, height, timeVal, scale, fontFamily,
+                    hasAudioData ? smoothFreq : null, hasAudioData ? smoothTime : null,
+                    hasMatrix, profile, density, isHighResExport);
+            } else if (system === 'DISMAL-DLA') {
+                renderDismalDLA(ctx, width, height, timeVal, scale, fontFamily,
+                    hasAudioData ? smoothFreq : null, hasAudioData ? smoothTime : null,
+                    hasMatrix, profile, density, isHighResExport);
+            } else {
+                renderPoeticCrumble(ctx, width, height, timeVal, scale, fontFamily,
+                    hasAudioData ? smoothFreq : null, hasAudioData ? smoothTime : null,
+                    hasMatrix, profile, density, isHighResExport);
+            }
+
+            // Aggiorna playhead della canvas pixel centrale
+            if (updateAudioState && AppState.sourceType === 'IMAGE' && !isHighResExport && AppState.isPlayingAudio) {
+                drawCenterPixelCanvas();
+            }
+        }
+
+        // =========================================================================
+        // 1. SISTEMA IMPRINT-SCANLINE (Fedele al poster di riferimento TOTER SCHMETTERLING)
+        //    - Nastri tipografici orizzontali full-bleed con maschera di occlusione
+        //      topografica bianca tra le creste d'onda.
+        //    - Interpolazione sub-pixel fluida lungo la curva e spaziatura continua C1.
+        // =========================================================================
+
+        function renderImprintScanline(ctx, width, height, timeVal, scale, fontFamily, freqData, timeData, hasMatrix, profile, density, isHighResExport) {
+            let lineCount = isHighResExport ? 96 : 54;
+            if (density === 'NORMAL') lineCount = isHighResExport ? 68 : 40;
+            if (density === 'ULTRA') lineCount = isHighResExport ? 130 : 72;
+
+            const baseFontSize = Math.round((isHighResExport ? 12 : 10) * scale);
+            const boldFontSize = Math.round(baseFontSize * 1.15);
+            const fontNormal = `700 ${baseFontSize}px ${fontFamily}`;
+            const fontBold = `900 ${boldFontSize}px ${fontFamily}`;
+
+            const stepY = height / (lineCount + 5);
+            const startY = stepY * 2.5;
+
+            const numBands = hasMatrix ? profile.matrix.length : 64;
+            // Stazioni orizzontali fisse: zero jitter/strobing orizzontale e 60fps costanti
+            const pointCount = isHighResExport ? 240 : 128;
+            const stepDx = width / pointCount;
+
+            const denseChars = TYPO_PALETTES.denseChars;
+            const scatterChars = TYPO_PALETTES.scatterChars;
+            const ribbons = TYPO_PALETTES.ribbonSets;
+
+            const dpr = isHighResExport ? 1 : currentDpr;
+
+            const envCache = new Float32Array(pointCount + 1);
+            for (let p = 0; p <= pointCount; p++) {
+                envCache[p] = Math.sin((p / pointCount) * Math.PI);
+            }
+
+            ctx.font = fontNormal;
+            let activeFontIsBold = false;
+            ctx.fillStyle = '#000000';
+            ctx.textBaseline = 'middle';
+            ctx.textAlign = 'center';
+
+            const hasImageGrid = AppState.sourceType === 'IMAGE' && AppState.imageLuminanceGrid;
+
+            for (let i = 0; i < lineCount; i++) {
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+                const normI = i / lineCount;
+                const baseY = startY + i * stepY;
+                const ribbonString = ribbons[i % ribbons.length];
+                const ribbonLen = ribbonString.length;
+                const bandIdx = Math.floor(normI * (numBands - 1));
+
+                // 1. Calcolo coordinate fluide della curva topografica del soundgraph
+                for (let p = 0; p <= pointCount; p++) {
+                    const normX = p / pointCount;
+                    const x = normX * width;
+                    let elevation = 0;
+
+                    if (AppState.sourceType === 'NONE') {
+                        elevation = 0;
+                    } else {
+                        const envelope = envCache[p];
+                        let songMod = 1.0;
+                        if (hasMatrix) {
+                            const matVal = sampleMatrixSmooth(profile.matrix, bandIdx, normX);
+                            songMod = 0.55 + matVal * 1.15;
+                        }
+                        if (hasImageGrid) {
+                            const pixelDarkness = getInterpolatedPixelDarkness(normX, normI);
+                            songMod = songMod * 0.55 + (0.50 + pixelDarkness * 1.25) * 0.45;
+                        }
+
+                        let fVal = 0.52;
+                        let tVal = 0;
+                        if (freqData && timeData) {
+                            const fExact = Math.min(510, normX * 160 + i * 2);
+                            const f0 = Math.floor(fExact);
+                            const fFrac = fExact - f0;
+                            const fInterp = freqData[f0] * (1 - fFrac) + freqData[f0 + 1] * fFrac;
+                            const timeIdx = Math.min(511, Math.floor(normX * 450));
+                            fVal = 0.35 + fInterp * 0.50;
+                            tVal = timeData[timeIdx] * 0.45;
+                        }
+
+                        const waveHarmonic = Math.sin(normX * Math.PI * 6 + timeVal * 2.2 + i * 0.18);
+                        elevation = (fVal * 92 * waveHarmonic * songMod + tVal * 18 * waveHarmonic) * envelope * scale;
+                    }
+
+                    P_X[p] = x;
+                    P_Y[p] = baseY + elevation;
+                    P_ELEV[p] = elevation;
+                }
+
+                // 2. Maschera di occlusione bianca con gonna limitata (zero overdraw GPU, rilievo 3D identico al poster)
+                if (AppState.sourceType !== 'NONE') {
+                    const skirtBottom = Math.min(height, baseY + 115 * scale);
+                    ctx.beginPath();
+                    ctx.moveTo(P_X[0], P_Y[0]);
+                    for (let p = 1; p <= pointCount; p++) {
+                        ctx.lineTo(P_X[p], P_Y[p]);
+                    }
+                    ctx.lineTo(width, skirtBottom);
+                    ctx.lineTo(0, skirtBottom);
+                    ctx.closePath();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fill();
+                    ctx.fillStyle = '#000000';
+                }
+
+                // 3. Posizionamento sub-pixel ancorato alle stazioni p: nessun salto di charIndex tra i frame
+                for (let p = 0; p < pointCount; p++) {
+                    const x0 = P_X[p], y0 = P_Y[p], e0 = P_ELEV[p];
+                    const y1 = P_Y[p + 1], e1 = P_ELEV[p + 1];
+                    const dy = y1 - y0;
+
+                    const midElev = 0.5 * (Math.abs(e0) + Math.abs(e1));
+                    const localEnergy = Math.min(1.0, midElev / (70 * scale));
+
+                    const isValley = localEnergy < 0.18 && AppState.sourceType !== 'NONE';
+                    // Nelle valli a bassa energia diradiamo a stazioni alterne fisse per creare il respiro bianco del poster
+                    if (isValley && ((p + i) & 1) === 1) continue;
+
+                    const isPeak = localEnergy > 0.60;
+                    const px = x0 + 0.5 * stepDx;
+                    const py = y0 + 0.5 * dy;
+
+                    const ribbonChar = ribbonString[p % ribbonLen];
+                    const charToDraw = isPeak
+                        ? denseChars[(p + i) % denseChars.length]
+                        : (isValley ? scatterChars[(p * 3 + i) % scatterChars.length] : ribbonChar);
+
+                    if (isPeak && !activeFontIsBold) { ctx.font = fontBold; activeFontIsBold = true; }
+                    else if (!isPeak && activeFontIsBold) { ctx.font = fontNormal; activeFontIsBold = false; }
+
+                    if (Math.abs(dy) > 0.05) {
+                        const invLen = 1.0 / Math.sqrt(stepDx * stepDx + dy * dy);
+                        const cos = stepDx * invLen;
+                        const sin = dy * invLen;
+                        ctx.setTransform(dpr * cos, dpr * sin, -dpr * sin, dpr * cos, dpr * px, dpr * py);
+                        ctx.fillText(charToDraw, 0, 0);
+                        // Doppia battuta tipografica densa sulle creste d'onda (stile TOTER SCHMETTERLING)
+                        if (localEnergy > 0.72) {
+                            const nextDense = denseChars[(p + i + 3) % denseChars.length];
+                            ctx.fillText(nextDense, 0.38 * stepDx, -0.85 * scale);
+                        }
+                    } else {
+                        ctx.setTransform(dpr, 0, 0, dpr, dpr * px, dpr * py);
+                        ctx.fillText(charToDraw, 0, 0);
+                    }
+                }
+            }
+
+            // Ripristino transform base prima di disegnare margini e scatter
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.fillStyle = '#000000';
+            if (activeFontIsBold) { ctx.font = fontNormal; activeFontIsBold = false; }
+
+            // Colonne tipografiche marginali
+            renderPosterMargins(ctx, width, height, startY, stepY, lineCount, baseFontSize, fontFamily);
+
+            if (AppState.sourceType !== 'NONE') {
+                ctx.font = fontNormal;
+                for (let s = 0; s < SCATTER_ITEMS.length; s++) {
+                    const item = SCATTER_ITEMS[s];
+                    ctx.fillText(item.char, width * item.rx, height * item.ry);
+                }
+            }
+        }
+
+        function renderPosterMargins(ctx, width, height, startY, stepY, lineCount, baseFontSize, fontFamily) {
+            ctx.fillStyle = '#000000';
+            ctx.font = `400 ${Math.round(baseFontSize * 0.88)}px ${fontFamily}`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            const xLeft1 = width * 0.018;
+            const xLeft2 = width * 0.038;
+            const xRight1 = width - width * 0.038;
+            const xRight2 = width - width * 0.018;
+
+            const l1 = MARGIN_COLS.left1;
+            const l2 = MARGIN_COLS.left2;
+            const r1 = MARGIN_COLS.right1;
+            const r2 = MARGIN_COLS.right2;
+
+            const count = Math.min(lineCount, 32);
+            for (let i = 0; i < count; i++) {
+                const y = startY + i * stepY * 1.08;
+                if (y > height - 65) break;
+                ctx.fillText(l1[i % l1.length], xLeft1, y);
+                ctx.fillText(l2[i % l2.length], xLeft2, y);
+                ctx.fillText(r1[i % r1.length], xRight1, y);
+                ctx.fillText(r2[i % r2.length], xRight2, y);
+            }
+        }
+
+        // =========================================================================
+        // 2. SISTEMA DISMAL-DLA (Ispirato a Mattia Resman - Dismal, Slanted 4.0)
+        //    - Tipografia generativa a blocchi bitmap e diffusione aggregata (DLA).
+        //    - Ogni canzone o immagine produce una ramificazione morfologica unica
+        //      guidata direttamente dalla matrice spettrografica 2D.
+        // =========================================================================
+
+        function renderDismalDLA(ctx, width, height, timeVal, scale, fontFamily, freqData, timeData, hasMatrix, profile, density, isHighResExport) {
+            const cols = isHighResExport ? 88 : 44;
+            const rows = isHighResExport ? 96 : 48;
+            const cellW = width / cols;
+            const cellH = height / rows;
+
+            const baseFontSize = Math.round(9.5 * scale);
+            ctx.font = `900 ${baseFontSize}px ${fontFamily}`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            const numBands = hasMatrix ? profile.matrix.length : 64;
+
+            const dlaGlyphs = TYPO_PALETTES.dlaGlyphs;
+            const centerC = cols / 2;
+            const centerR = rows / 2;
+            const maxRadius = Math.hypot(centerC, centerR);
+
+            // Bordo di sicurezza margini
+            const marginCols = isHighResExport ? 5 : 2;
+            const marginRows = isHighResExport ? 7 : 3;
+
+            for (let c = marginCols; c < cols - marginCols; c++) {
+                const normC = c / cols;
+
+                for (let r = marginRows; r < rows - marginRows; r++) {
+                    const normR = r / rows;
+                    // Frequenze basse in basso, frequenze alte in alto
+                    const bandIdx = Math.floor((1.0 - normR) * (numBands - 1));
+
+                    let acousticPower = 0;
+                    if (AppState.sourceType === 'NONE') {
+                        // All'inizio: solo un reticolo di punti base minimo statico
+                        acousticPower = 0.05;
+                    } else if (hasMatrix) {
+                        const songEnergy = sampleMatrixSmooth(profile.matrix, bandIdx, normC);
+                        
+                        // Live FFT modulation fluida
+                        let liveMod = 0;
+                        if (freqData && timeData && AppState.isPlayingAudio) {
+                            const fIdx = Math.min(511, Math.floor(bandIdx * 7 + (c % 16)));
+                            const tIdx = Math.min(511, Math.floor(c * 10));
+                            liveMod = freqData[fIdx] * 0.55 + Math.abs(timeData[tIdx]) * 0.30;
+                        } else if (!AppState.isPlayingAudio && (AppState.sourceType === 'IMAGE' || AppState.sourceType === 'AUDIO')) {
+                            liveMod = 0.15 * Math.sin(normC * 8 + normR * 6);
+                        }
+
+                        acousticPower = songEnergy * 0.78 + liveMod * 0.55;
+                    }
+
+                    // Distanza dal centro ed effetto micelio / DLA radial field
+                    const dx = (c - centerC);
+                    const dy = (r - centerR);
+                    const distNorm = Math.hypot(dx, dy) / maxRadius;
+
+                    // Il soundgraph guida la crescita e ramificazione del micelio tipografico
+                    const dlaThreshold = 0.20 + distNorm * 0.44;
+                    if (acousticPower < dlaThreshold && AppState.sourceType !== 'NONE') {
+                        // In zone di silenzio/bassa energia: micro punteggiatura
+                        if ((c + r) % 5 === 0 && Math.sin(c * 13 + r * 7) > 0.6) {
+                            ctx.fillStyle = 'rgba(0,0,0,0.18)';
+                            ctx.fillText('·', c * cellW + cellW / 2, r * cellH + cellH / 2);
+                        }
+                        continue;
+                    }
+
+                    const x = c * cellW + cellW / 2;
+                    const y = r * cellH + cellH / 2;
+                    const energyNorm = Math.min(1.0, (acousticPower - dlaThreshold) / 0.55);
+
+                    // Stile Mattia Resman Dismal (IMG_7663.png):
+                    // 1. Blocchi pixel pieni nei centri ad alta energia
+                    // 2. Contorni quadrati / box bitmap a media energia
+                    // 3. Glifi alfanumerici geometrici alle estremità delle ramificazioni
+                    if (energyNorm > 0.72) {
+                        const grow = 0.78 + smoothstepVal(0.72, 1.0, energyNorm) * 0.14;
+                        if ((c + r) % 3 === 0) {
+                            ctx.fillStyle = '#000000';
+                            ctx.fillRect(x - cellW * grow * 0.5, y - cellH * grow * 0.5, cellW * grow, cellH * grow);
+                        } else {
+                            const g = dlaGlyphs[(c * 3 + r * 7) % 6];
+                            ctx.fillStyle = '#000000';
+                            ctx.fillText(g, x, y);
+                        }
+                    } else if (energyNorm > 0.38) {
+                        ctx.strokeStyle = '#000000';
+                        ctx.lineWidth = 1.2 * scale;
+                        ctx.strokeRect(x - cellW * 0.4, y - cellH * 0.4, cellW * 0.8, cellH * 0.8);
+                        if ((c + r) % 2 === 0) {
+                            const g = dlaGlyphs[6 + ((c + r * 3) % 10)];
+                            ctx.fillStyle = '#000000';
+                            ctx.fillText(g, x, y);
+                        }
+                    } else {
+                        const alpha = 0.25 + smoothstepVal(0.0, 0.38, energyNorm) * 0.55;
+                        const g = dlaGlyphs[14 + ((c * 2 + r) % (dlaGlyphs.length - 14))];
+                        ctx.fillStyle = `rgba(0, 0, 0, ${alpha.toFixed(2)})`;
+                        ctx.fillText(g, x, y);
+                    }
+                }
+            }
+
+            // Margini poster
+            renderPosterMargins(ctx, width, height, cellH * 3, cellH * 2, rows, baseFontSize, fontFamily);
+        }
+
+        // =========================================================================
+        // 3. SISTEMA POETIC-CRUMBLE (Sgretolamento e Pulsazione Tipografica Fluida)
+        //    - Il testo poetico/filosofico forma una colonna editoriale centrale leggibile.
+        //    - Transizioni C1 ultra-fluide a 60fps tramite matrici setTransform sub-pixel
+        //      e font pre-cachati (zero scatti di quantizzazione sui corpi carattere).
+        // =========================================================================
+
+        function renderPoeticCrumble(ctx, width, height, timeVal, scale, fontFamily, freqData, timeData, hasMatrix, profile, density, isHighResExport) {
+            const corpus = getTrackCorpus(AppState.trackTitle, profile ? profile.duration : 0);
+            const dpr = isHighResExport ? 1 : currentDpr;
+
+            let lineCount = isHighResExport ? 58 : 38;
+            if (density === 'NORMAL') lineCount = isHighResExport ? 44 : 28;
+            if (density === 'ULTRA') lineCount = isHighResExport ? 76 : 50;
+
+            const baseFontSize = Math.round(11.5 * scale);
+            const baseLineH = (height * 0.74) / lineCount;
+            const startY = height * 0.13;
+
+            const numBands = hasMatrix ? profile.matrix.length : 64;
+
+            let bassEnergy = 0;
+            let midEnergy = 0;
+            let highEnergy = 0;
+
+            if (freqData && AppState.sourceType !== 'NONE') {
+                let bSum = 0, mSum = 0, hSum = 0;
+                for (let k = 0; k < 8; k++) bSum += freqData[k];
+                for (let k = 8; k < 32; k++) mSum += freqData[k];
+                for (let k = 32; k < 128; k++) hSum += freqData[k];
+                bassEnergy = bSum / 8;
+                midEnergy = mSum / 24;
+                highEnergy = hSum / 96;
+            } else if (AppState.sourceType !== 'NONE') {
+                bassEnergy = 0.22;
+                midEnergy = 0.16;
+                highEnergy = 0.12;
+            }
+
+            // PULSAZIONE RITMICA GLOBALE DELLA COLONNA:
+            const pulseLineH = baseLineH * (1.0 + bassEnergy * 0.10);
+            const globalPhase = timeVal * 2.6;
+
+            ctx.textBaseline = 'middle';
+            ctx.textAlign = 'center';
+
+            // Pre-cache dei 3 pesi tipografici (evita migliaia di parsing CSS font per frame -> 60fps fluidissimi)
+            const fontRegular = `400 ${baseFontSize}px ${fontFamily}`;
+            const fontBold = `700 ${baseFontSize}px ${fontFamily}`;
+            const fontBlack = `900 ${baseFontSize}px ${fontFamily}`;
+            let currentFont = '';
+            function useFont(f) {
+                if (currentFont !== f) {
+                    ctx.font = f;
+                    currentFont = f;
+                }
+            }
+
+            const tokens = corpus.tokens;
+            const tokensCount = tokens.length;
+            const hasImageGrid = AppState.sourceType === 'IMAGE' && AppState.imageLuminanceGrid;
+
+            for (let i = 0; i < lineCount; i++) {
+                const normI = i / lineCount;
+                const bandIdx = Math.floor(normI * (numBands - 1));
+
+                // Energia spettrale di riga interpolata fluidamente dal soundgraph
+                let rowSpectral = 0;
+                if (AppState.sourceType !== 'NONE') {
+                    if (hasMatrix) {
+                        const normSlice = (normI * 0.85 + timeVal * 0.09) % 1;
+                        rowSpectral = sampleMatrixSmooth(profile.matrix, bandIdx, normSlice);
+                    }
+                    if (freqData) {
+                        const fVal = freqData[Math.min(511, bandIdx * 4)];
+                        rowSpectral = rowSpectral * 0.55 + fVal * 0.65;
+                    }
+                }
+
+                // Coordinata Y della riga con pulsazione ritmica verticale morbida
+                const linePulseY = AppState.sourceType === 'NONE'
+                    ? 0
+                    : Math.sin(globalPhase + i * 0.22) * bassEnergy * 4.2 * scale;
+                const rowY = startY + i * pulseLineH + linePulseY;
+
+                // Costruzione del verso filosofico/poetico (8 parole per riga)
+                const lineTokenStart = (i * 7) % tokensCount;
+                let rowText = "";
+                for (let t = 0; t < 8; t++) {
+                    rowText += tokens[(lineTokenStart + t) % tokensCount] + " ";
+                }
+                rowText = rowText.trim();
+
+                const charCount = rowText.length;
+                const baseCharSpacing = baseFontSize * 0.66;
+                const rowBreath = AppState.sourceType === 'NONE'
+                    ? 1.0
+                    : (1.0 + bassEnergy * 0.14 + Math.sin(globalPhase + normI * 4.0) * midEnergy * 0.07);
+                const dynamicCharSpacing = baseCharSpacing * rowBreath;
+                const rowVisualWidth = charCount * dynamicCharSpacing;
+                const rowStartX = (width - rowVisualWidth) / 2;
+
+                for (let c = 0; c < charCount; c++) {
+                    const ch = rowText[c];
+                    if (ch === ' ') continue;
+
+                    const normC = c / Math.max(1, charCount - 1);
+                    const baseCharX = rowStartX + c * dynamicCharSpacing;
+
+                    if (AppState.sourceType === 'NONE') {
+                        useFont(fontRegular);
+                        ctx.fillStyle = '#000000';
+                        ctx.setTransform(dpr, 0, 0, dpr, dpr * baseCharX, dpr * rowY);
+                        ctx.fillText(ch, 0, 0);
+                        continue;
+                    }
+
+                    // Campionamento spaziale 2D continuo del soundgraph nel punto (normC, normI)
+                    let cellEnergy = rowSpectral;
+                    if (hasMatrix) {
+                        const matVal = sampleMatrixSmooth(profile.matrix, bandIdx, normC);
+                        cellEnergy = cellEnergy * 0.45 + matVal * 0.75;
+                    }
+                    if (hasImageGrid) {
+                        const pixDark = getInterpolatedPixelDarkness(normC, normI);
+                        cellEnergy = cellEnergy * 0.50 + pixDark * 0.70;
+                    }
+
+                    // Fronte d'onda diagonale fluido che attraversa la colonna
+                    const waveFront1 = Math.sin(normC * Math.PI * 3.2 - normI * 5.2 + globalPhase * 0.75);
+                    const waveFront2 = Math.cos(normC * 7.5 + normI * 6.8 - globalPhase * 0.52) * 0.45;
+                    const waveMask = Math.max(0, (waveFront1 + waveFront2 + 0.25) * 0.62);
+
+                    const localS = waveMask * (0.48 + cellEnergy * 0.72 + bassEnergy * 0.30);
+
+                    const charSeed = (i * 83 + c * 137 + 19) % 1000;
+                    const seedNorm = charSeed / 1000;
+                    const isVowelOrPunct = (
+                        ch === 'a' || ch === 'e' || ch === 'i' || ch === 'o' || ch === 'u' ||
+                        ch === 'A' || ch === 'E' || ch === 'I' || ch === 'O' || ch === 'U' ||
+                        ch === '!' || ch === '?' || ch === '.' || ch === ',' || ch === '-' || ch === ':'
+                    );
+
+                    // ZONA 1: PAROLE INTATTE CHE PULSANO IN RITMO CON IL SOUNDGRAPH
+                    if (localS < 0.44) {
+                        const pulseBeat = 1.0 + Math.max(0, Math.sin(globalPhase * 1.4 - normI * 3.0)) * bassEnergy * 0.22;
+                        useFont((bassEnergy > 0.45 && (i + c) % 7 === 0) ? fontBold : fontRegular);
+                        ctx.fillStyle = '#000000';
+                        const s = dpr * pulseBeat;
+                        ctx.setTransform(s, 0, 0, s, dpr * baseCharX, dpr * rowY);
+                        ctx.fillText(ch, 0, 0);
+                        continue;
+                    }
+
+                    // ZONA 2: FRATTURA SILLABICA E VUOTI INTERNI ("Ha! Ha!   a   a   a   !")
+                    if (localS < 0.68) {
+                        if (!isVowelOrPunct && seedNorm < 0.64) {
+                            continue;
+                        }
+                        const tZone2 = smoothstepVal(0.44, 0.68, localS);
+                        const stutterShiftX = Math.sin(c * 1.3 + globalPhase) * tZone2 * 4.2 * scale;
+                        const s = dpr * (1.0 + tZone2 * 0.08);
+                        useFont(fontBold);
+                        ctx.fillStyle = '#000000';
+                        ctx.setTransform(s, 0, 0, s, dpr * (baseCharX + stutterShiftX), dpr * rowY);
+                        ctx.fillText(ch, 0, 0);
+                        continue;
+                    }
+
+                    // ZONA 3: SGRETOLAMENTO ATTIVO E SCIA DI POLVERE TIPOGRAFICA CONTINUA
+                    const crumbleIntensity = Math.min(1.35, smoothstepVal(0.68, 1.16, localS) * 1.35);
+                    const sideDir = normC < 0.45 ? -1 : (normC > 0.55 ? 1 : (seedNorm < 0.5 ? -1 : 1));
+
+                    const streamAngle = (sideDir > 0 ? 0.38 : Math.PI - 0.38)
+                        + Math.sin(normI * 5.0 + globalPhase * 0.45) * 0.42
+                        + (seedNorm - 0.5) * 0.55;
+
+                    const maxDrift = 115 * scale;
+                    const driftDist = Math.pow(crumbleIntensity, 1.2) * maxDrift * (0.35 + seedNorm * 0.85);
+                    const driftX = Math.cos(streamAngle) * driftDist + sideDir * crumbleIntensity * 22 * scale;
+                    const driftY = Math.sin(streamAngle) * driftDist * 0.72 + crumbleIntensity * 18 * scale;
+
+                    const posX = baseCharX + driftX;
+                    const posY = rowY + driftY;
+                    const rotAngle = (sideDir * 0.35 + (seedNorm - 0.5) * 0.85) * crumbleIntensity;
+                    const fontScale = Math.max(0.68, 1.16 - crumbleIntensity * 0.26 + Math.sin(globalPhase + c) * 0.10);
+
+                    useFont(crumbleIntensity > 0.55 ? fontBlack : fontBold);
+
+                    const cos = Math.cos(rotAngle) * fontScale * dpr;
+                    const sin = Math.sin(rotAngle) * fontScale * dpr;
+
+                    // Sovrastampa d'inchiostro vibrante (ghost overprint stile tavola Sam Winston)
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+                    ctx.setTransform(cos, sin, -sin, cos, dpr * (posX + 1.4 * scale), dpr * (posY - 1.2 * scale));
+                    ctx.fillText(ch, 0, 0);
+
+                    // Lettera sgretolata principale
+                    ctx.fillStyle = '#000000';
+                    ctx.setTransform(cos, sin, -sin, cos, dpr * posX, dpr * posY);
+                    ctx.fillText(ch, 0, 0);
+
+                    // Sciame di micro-frammenti / briciole tipografiche che proseguono lungo la scia nel vuoto bianco
+                    if (crumbleIntensity > 0.38 && seedNorm > 0.32) {
+                        const c1Scale = fontScale * 0.76 * dpr;
+                        const cos1 = Math.cos(rotAngle) * c1Scale;
+                        const sin1 = Math.sin(rotAngle) * c1Scale;
+                        const crumbX1 = posX + Math.cos(streamAngle) * (16 + seedNorm * 22) * scale;
+                        const crumbY1 = posY + Math.sin(streamAngle) * (12 + seedNorm * 18) * scale;
+                        useFont(fontRegular);
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.62)';
+                        ctx.setTransform(cos1, sin1, -sin1, cos1, dpr * crumbX1, dpr * crumbY1);
+                        ctx.fillText(isVowelOrPunct ? ch : '.', 0, 0);
+
+                        if (crumbleIntensity > 0.72) {
+                            const c2Scale = fontScale * 0.56 * dpr;
+                            const crumbX2 = crumbX1 + Math.cos(streamAngle + 0.18) * (18 + seedNorm * 26) * scale;
+                            const crumbY2 = crumbY1 + Math.sin(streamAngle + 0.18) * (14 + seedNorm * 20) * scale;
+                            ctx.fillStyle = 'rgba(0, 0, 0, 0.36)';
+                            ctx.setTransform(c2Scale, 0, 0, c2Scale, dpr * crumbX2, dpr * crumbY2);
+                            ctx.fillText(ch, 0, 0);
+                        }
+                    }
+                }
+            }
+
+            // Ripristino matrice di trasformazione
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            // Colonne tipografiche marginali per coerenza editoriale del poster
+            renderPosterMargins(ctx, width, height, startY, pulseLineH, lineCount, baseFontSize, fontFamily);
+
+            // Didascalia concettuale in basso
+            ctx.fillStyle = '#000000';
+            ctx.textAlign = 'center';
+            ctx.font = `700 ${Math.round(8.5 * scale)}px ${fontFamily}`;
+            const footerText = `POETIC DISINTEGRATION // ${corpus.author}: "${corpus.work}" // KINETIC CRUMBLE SCORE`;
+            ctx.fillText(footerText, width / 2, height - 28 * scale);
+        }
+
+        // =========================================================================
+        // ANIMATION LOOP: IN PAUSA SI CONGELA ESATTAMENTE NELLA FORMA
+        // =========================================================================
+
+        let lastTimestamp = 0;
+        let VideoReelExporter = null;
+
+        // Aggiornamento ultra-fluido del cursore a croce con mix-blend-mode: difference
+        const customCursorEl = document.getElementById('customReticleCursor');
+        if (customCursorEl) {
+            const updateReticlePos = (e) => {
+                customCursorEl.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0) translate(-50%, -50%)`;
+            };
+            window.addEventListener('pointermove', updateReticlePos, { passive: true });
+            window.addEventListener('pointerdown', updateReticlePos, { passive: true });
+        }
+
+        function animate(ts) {
+            if (!lastTimestamp) lastTimestamp = ts;
+            const dt = Math.min((ts - lastTimestamp) / 1000, 0.05);
+            lastTimestamp = ts;
+
+            if (AppState.isPlayingAudio) {
+                AppState.time += dt;
+            }
+
+            renderGenerativeSystem(ctxMain, window.innerWidth, window.innerHeight, AppState.time, false, true);
+
+            if (VideoReelExporter && VideoReelExporter.isRecording) {
+                VideoReelExporter.renderVerticalFrame();
+            }
+
+            requestAnimationFrame(animate);
+        }
+        requestAnimationFrame(animate);
+
+        // =========================================================================
+        // EXPORT POSTER A4 (2480 × 3508 PX @ 300 DPI)
+        // =========================================================================
+
+        class A4PosterExporter {
+            constructor() {
+                this.width = 2480; this.height = 3508;
+                this.currentBlobUrl = null; this.currentBlob = null;
+                this.initModalEvents();
+            }
+            initModalEvents() {
+                DOM.btnModalClose.addEventListener('click', () => this.closeModal());
+                DOM.exportModal.addEventListener('click', (e) => { if (e.target === DOM.exportModal) this.closeModal(); });
+                window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && DOM.exportModal.classList.contains('active')) this.closeModal(); });
+                
+                DOM.btnModalDownloadWithImg.addEventListener('click', () => this.generateAndDownload(true));
+                DOM.btnModalDownloadTypoOnly.addEventListener('click', () => this.generateAndDownload(false));
+                DOM.btnModalNewTab.addEventListener('click', () => { if (this.currentBlobUrl) window.open(this.currentBlobUrl, '_blank'); });
+                DOM.btnModalClipboard.addEventListener('click', () => this.copyToClipboard());
+            }
+
+            async generateBlob(includeImage) {
+                const offscreen = document.createElement('canvas');
+                offscreen.width = this.width; offscreen.height = this.height;
+                const ctx = offscreen.getContext('2d');
+
+                renderGenerativeSystem(ctx, this.width, this.height, AppState.time, true, false);
+
+                if (includeImage && AppState.sourceType === 'IMAGE' && AppState.rawColorPixels) {
+                    this.drawCentralPixelImageA4(ctx, this.width, this.height);
+                }
+
+                this.drawFullTypography(ctx, includeImage, this.width, this.height);
+                this.drawPrintGrain(ctx);
+
+                const blob = await new Promise((res, rej) => {
+                    offscreen.toBlob(b => b ? res(b) : rej(new Error('Blob error')), 'image/png');
+                });
+                offscreen.width = 1; offscreen.height = 1;
+                return blob;
+            }
+
+            async generateAndDownload(includeImage) {
+                showToast(includeImage ? 'EXPORTING WITH IMAGE (300 DPI)...' : 'EXPORTING TYPOGRAPHY ONLY (300 DPI)...');
+                const blob = await this.generateBlob(includeImage);
+                this.currentBlob = blob;
+                if (this.currentBlobUrl) URL.revokeObjectURL(this.currentBlobUrl);
+                this.currentBlobUrl = URL.createObjectURL(blob);
+                DOM.modalPreviewImg.src = this.currentBlobUrl;
+                
+                const suffix = includeImage ? 'with_image' : 'typography_only';
+                this.triggerDirectDownload(suffix);
+                showToast('A4 POSTER READY');
+            }
+
+            async exportPoster() {
+                const hasImage = AppState.sourceType === 'IMAGE' && AppState.rawColorPixels;
+                DOM.btnModalDownloadWithImg.style.display = hasImage ? 'inline-block' : 'none';
+
+                showToast(`RENDERING ${AppState.systems[AppState.currentSystemIndex]} A4 (300 DPI)...`);
+                const blob = await this.generateBlob(hasImage);
+                this.currentBlob = blob;
+                if (this.currentBlobUrl) URL.revokeObjectURL(this.currentBlobUrl);
+                this.currentBlobUrl = URL.createObjectURL(blob);
+                
+                this.openModal();
+                showToast('A4 POSTER READY // SELECT DOWNLOAD FORMAT');
+            }
+
+            drawCentralPixelImageA4(ctx, canvasW = this.width, canvasH = this.height) {
+                const N = AppState.pixelGridSize; // 36
+                const colors = AppState.rawColorPixels;
+                const lums = AppState.imageLuminanceGrid;
+                if (!colors || !lums) return;
+
+                const ratio = canvasW / 2480;
+                const targetW = Math.round(600 * ratio);
+                const targetH = targetW;
+                const startX = (canvasW - targetW) / 2;
+                const startY = (canvasH - targetH) / 2;
+                const cellW = targetW / N;
+                const cellH = targetH / N;
+
+                if (!AppState.isMatrixMode) {
+                    for (let y = 0; y < N; y++) {
+                        for (let x = 0; x < N; x++) {
+                            const c = colors[y][x];
+                            ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
+                            ctx.fillRect(startX + x * cellW, startY + y * cellH, cellW, cellH);
+                        }
+                    }
+                } else {
+                    for (let y = 0; y < N; y++) {
+                        for (let x = 0; x < N; x++) {
+                            const lum = lums[y][x];
+                            ctx.fillStyle = lum < 0.5 ? '#000000' : '#ffffff';
+                            ctx.fillRect(startX + x * cellW, startY + y * cellH, cellW, cellH);
+                        }
+                    }
+                }
+
+                if (AppState.isPlayingAudio && AppState.sourceType === 'IMAGE') {
+                    const duration = AppState.audioBuffer ? AppState.audioBuffer.duration : 10;
+                    const currentTime = AppState.audioCtx ? (AppState.audioCtx.currentTime - audioPlaybackStartTime) % duration : 0;
+                    const scanX = startX + (currentTime / duration) * targetW;
+                    ctx.fillStyle = 'rgba(255, 0, 0, 0.45)';
+                    ctx.fillRect(scanX - 1.5 * ratio, startY, Math.max(2, 3 * ratio), targetH);
+                }
+
+                if (DOM.centerImageInfoBar.style.display !== 'none') {
+                    const f1 = Math.max(10, Math.round(24 * ratio));
+                    const f2 = Math.max(9, Math.round(22 * ratio));
+                    const offsetBar = Math.round(34 * ratio);
+                    ctx.fillStyle = '#000000';
+                    ctx.font = `900 ${f1}px "Helvetica Neue", Helvetica, Arial, sans-serif`;
+                    ctx.textAlign = 'left';
+                    ctx.fillText(DOM.centerInfoLeft.textContent, startX, startY + targetH + offsetBar);
+                    ctx.textAlign = 'center';
+                    ctx.fillText(DOM.centerInfoMode.textContent, startX + targetW / 2, startY + targetH + offsetBar);
+                    ctx.textAlign = 'right';
+                    ctx.font = `700 ${f2}px "Andale Mono", monospace`;
+                    ctx.fillText(DOM.centerInfoRight.textContent, startX + targetW, startY + targetH + offsetBar);
+                }
+            }
+
+            drawFullTypography(ctx, includedImage = true, canvasW = this.width, canvasH = this.height) {
+                ctx.save();
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.globalCompositeOperation = 'difference';
+                ctx.fillStyle = '#ffffff'; ctx.textBaseline = 'top';
+                const scale = canvasW / 1440;
+                const fontBase = Math.round(14 * scale);
+                const lh = Math.round(fontBase * 1.08);
+                ctx.font = `900 ${fontBase}px "Helvetica Neue", Helvetica, Arial, sans-serif`;
+                const mt = Math.round(48 * scale);
+                const ml = Math.round(56 * scale);
+                const mr = canvasW - Math.round(56 * scale);
+
+                let y1 = mt; ctx.textAlign = 'left';
+                ctx.fillText('Spectral proof.', ml, y1); y1 += lh;
+                ctx.fillText(AppState.trackTitle, ml, y1); y1 += lh;
+                ctx.fillText('210x297mm.', ml, y1); y1 += lh;
+                ctx.fillText('Black 000000.', ml, y1); y1 += lh;
+                ctx.fillText('■ data print.', ml, y1);
+
+                let y2 = mt; const c2 = ml + Math.round(340 * scale);
+                ctx.fillText('Optical matrix.', c2, y2); y2 += lh;
+                ctx.fillText(`[ SYSTEM: ${AppState.systems[AppState.currentSystemIndex]} ]`, c2, y2); y2 += lh;
+                ctx.fillText(`[ DENSITY: ${AppState.densityModes[AppState.currentDensityIndex]} ]`, c2, y2); y2 += lh;
+                ctx.fillText(`[ FONT: ${AppState.fontModes[AppState.currentFontIndex]} ]`, c2, y2);
+
+                let y3 = mt; const c3 = mr - Math.round(390 * scale);
+                ctx.fillText('Topographic-', c3, y3); y3 += lh;
+                ctx.fillText('flow.', c3, y3); y3 += lh;
+                ctx.fillText('Vector graph.', c3, y3); y3 += lh;
+                ctx.fillText('Zero latency.', c3, y3); y3 += lh;
+                ctx.fillText('wave data [EXPORT A4].', c3, y3);
+
+                let y4 = mt; ctx.textAlign = 'right';
+                ctx.fillText('Image to sound.', mr, y4); y4 += lh;
+                ctx.fillText(DOM.uiStatusText.textContent, mr, y4); y4 += lh;
+                ctx.fillText(`STREAM: ${AppState.sourceType}`, mr, y4); y4 += lh;
+                ctx.fillText(includedImage ? 'FULL-BLEED PRINT PROOF (IMAGE)' : 'FULL-BLEED PRINT PROOF (TYPO)', mr, y4);
+
+                const bm = canvasH - Math.round(48 * scale);
+                const bfs = Math.round(11 * scale);
+                const blh = Math.round(bfs * 1.25);
+                ctx.font = `900 ${bfs}px "Helvetica Neue", Helvetica, Arial, sans-serif`;
+                ctx.textAlign = 'left';
+                ctx.fillText(DOM.uiBottomTitle.textContent, ml, bm - blh);
+                ctx.fillText(AppState.technicalMeta, ml, bm);
+                ctx.textAlign = 'right';
+                ctx.fillText(DOM.uiTimestamp.textContent, mr, bm - blh);
+                ctx.fillText('210 × 297 MM // 300 DPI HI-RES PROOF', mr, bm);
+                ctx.restore();
+            }
+
+            drawPrintGrain(ctx) {
+                ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.03)';
+                for (let i = 0; i < 45000; i++) ctx.fillRect(Math.random() * this.width, Math.random() * this.height, 1.6, 1.6);
+                ctx.restore();
+            }
+
+            triggerDirectDownload(suffix = 'proof') {
+                if (!this.currentBlobUrl) return;
+                try {
+                    const cn = AppState.trackTitle.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+                    const cs = AppState.systems[AppState.currentSystemIndex].toLowerCase();
+                    const a = document.createElement('a');
+                    a.style.display = 'none'; a.href = this.currentBlobUrl;
+                    a.download = `soundgraph_${cs}_${cn || 'proof'}_${suffix}.png`;
+                    document.body.appendChild(a); a.click();
+                    setTimeout(() => { if (document.body.contains(a)) document.body.removeChild(a); }, 200);
+                } catch(e) { console.warn('Download blocked:', e); }
+            }
+
+            async copyToClipboard() {
+                if (!this.currentBlob) return;
+                try {
+                    if (navigator.clipboard && window.ClipboardItem) {
+                        await navigator.clipboard.write([new ClipboardItem({'image/png': this.currentBlob})]);
+                        showToast('IMAGE COPIED TO CLIPBOARD!');
+                        const prev = DOM.btnModalClipboard.textContent;
+                        DOM.btnModalClipboard.textContent = '[ COPIED! ✓ ]';
+                        setTimeout(() => DOM.btnModalClipboard.textContent = prev, 1800);
+                    } else { alert('Clipboard API unavailable.'); }
+                } catch(e) { console.error(e); alert('Clipboard error. Use right-click to save.'); }
+            }
+
+            openModal() { DOM.modalPreviewImg.src = this.currentBlobUrl; DOM.exportModal.classList.add('active'); }
+            closeModal() {
+                DOM.exportModal.classList.remove('active'); DOM.modalPreviewImg.src = '';
+                if (this.currentBlobUrl) { URL.revokeObjectURL(this.currentBlobUrl); this.currentBlobUrl = null; }
+                this.currentBlob = null;
+            }
+        }
+
+        const Exporter = new A4PosterExporter();
+        DOM.exportA4Trigger.addEventListener('click', () => { Exporter.exportPoster(); });
+
+        // =========================================================================
+        // EXPORT VIDEO REEL VERTICALE A4 (1080 × 1528 PX, MAX 15S @ 60 FPS + AUDIO)
+        // =========================================================================
+
+        class TypographicVideoExporter {
+            constructor() {
+                // Proporzione verticale A4 esatta (210 × 297 mm -> 1080 × 1528 px)
+                this.width = 1080;
+                this.height = 1528;
+                this.verticalCanvas = document.createElement('canvas');
+                this.verticalCanvas.width = this.width;
+                this.verticalCanvas.height = this.height;
+                this.verticalCtx = this.verticalCanvas.getContext('2d', { alpha: false });
+
+                this.maxDurationMs = 15000;
+                this.mediaRecorder = null;
+                this.recordedChunks = [];
+                this.isRecording = false;
+                this.startTime = 0;
+                this.timerInterval = null;
+                this.stopTimeout = null;
+                this.mimeType = 'video/webm';
+                this.extension = 'webm';
+            }
+
+            renderVerticalFrame() {
+                if (!this.verticalCtx) return;
+                const ctx = this.verticalCtx;
+                renderGenerativeSystem(ctx, this.width, this.height, AppState.time, true, false);
+                const hasImage = AppState.sourceType === 'IMAGE' && AppState.rawColorPixels;
+                if (hasImage) {
+                    Exporter.drawCentralPixelImageA4(ctx, this.width, this.height);
+                }
+                Exporter.drawFullTypography(ctx, hasImage, this.width, this.height);
+            }
+
+            detectBestMimeType() {
+                if (typeof MediaRecorder === 'undefined') return null;
+                const candidates = [
+                    { mime: 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', ext: 'mp4' },
+                    { mime: 'video/mp4', ext: 'mp4' },
+                    { mime: 'video/webm;codecs=vp9,opus', ext: 'webm' },
+                    { mime: 'video/webm;codecs=vp8,opus', ext: 'webm' },
+                    { mime: 'video/webm', ext: 'webm' }
+                ];
+                for (let i = 0; i < candidates.length; i++) {
+                    if (typeof MediaRecorder.isTypeSupported === 'function' && MediaRecorder.isTypeSupported(candidates[i].mime)) {
+                        this.mimeType = candidates[i].mime;
+                        this.extension = candidates[i].ext;
+                        return candidates[i].mime;
+                    }
+                }
+                return '';
+            }
+
+            async toggleRecording() {
+                if (this.isRecording) {
+                    this.stopRecording();
+                } else {
+                    await this.startRecording();
+                }
+            }
+
+            async startRecording() {
+                if (typeof this.verticalCanvas.captureStream !== 'function' || typeof MediaRecorder === 'undefined') {
+                    showToast('VIDEO EXPORT UNSUPPORTED IN THIS BROWSER');
+                    return;
+                }
+
+                await unlockAudio();
+                if (AppState.sourceType !== 'NONE' && !AppState.isPlayingAudio && AppState.audioBuffer) {
+                    await startAudioPlayback(audioPausedOffset);
+                }
+
+                // Renderizza subito il primo frame verticale A4 (1080 × 1528)
+                this.renderVerticalFrame();
+
+                const canvasStream = this.verticalCanvas.captureStream(60);
+                const combinedTracks = [...canvasStream.getVideoTracks()];
+                if (AppState.audioCtx && typeof AppState.audioCtx.createMediaStreamDestination === 'function') {
+                    try {
+                        if (!AppState.mediaStreamDest) {
+                            AppState.mediaStreamDest = AppState.audioCtx.createMediaStreamDestination();
+                        }
+                        AppState.gainNode.connect(AppState.mediaStreamDest);
+                        const audioTracks = AppState.mediaStreamDest.stream.getAudioTracks();
+                        for (let i = 0; i < audioTracks.length; i++) {
+                            combinedTracks.push(audioTracks[i]);
+                        }
+                    } catch (e) {}
+                }
+
+                const combinedStream = new MediaStream(combinedTracks);
+                const chosenMime = this.detectBestMimeType();
+                const options = { videoBitsPerSecond: 10000000 };
+                if (chosenMime) options.mimeType = chosenMime;
+
+                try {
+                    this.mediaRecorder = new MediaRecorder(combinedStream, options);
+                } catch (e) {
+                    this.mediaRecorder = new MediaRecorder(combinedStream);
+                }
+
+                this.recordedChunks = [];
+                this.mediaRecorder.ondataavailable = (ev) => {
+                    if (ev.data && ev.data.size > 0) this.recordedChunks.push(ev.data);
+                };
+                this.mediaRecorder.onstop = () => this.finalizeVideoDownload();
+
+                this.isRecording = true;
+                this.startTime = performance.now();
+                this.mediaRecorder.start(100);
+
+                showToast('RECORDING A4 VERTICAL VIDEO (MAX 15S)...');
+                this.updateButtonLabel(0);
+
+                this.timerInterval = setInterval(() => {
+                    const elapsed = performance.now() - this.startTime;
+                    if (elapsed >= this.maxDurationMs) {
+                        this.stopRecording();
+                    } else {
+                        this.updateButtonLabel(elapsed);
+                    }
+                }, 100);
+
+                this.stopTimeout = setTimeout(() => {
+                    if (this.isRecording) this.stopRecording();
+                }, this.maxDurationMs);
+            }
+
+            updateButtonLabel(elapsedMs) {
+                if (!DOM.exportVideoTrigger) return;
+                const secs = Math.min(15.0, elapsedMs / 1000).toFixed(1);
+                DOM.exportVideoTrigger.innerHTML = `<span class="tiny-icon"></span>● REC ${secs}S / 15.0S [STOP & SAVE]`;
+            }
+
+            stopRecording() {
+                if (!this.isRecording) return;
+                this.isRecording = false;
+                if (this.timerInterval) { clearInterval(this.timerInterval); this.timerInterval = null; }
+                if (this.stopTimeout) { clearTimeout(this.stopTimeout); this.stopTimeout = null; }
+                if (DOM.exportVideoTrigger) {
+                    DOM.exportVideoTrigger.innerHTML = `<span class="tiny-icon"></span>motion reel [EXPORT VIDEO 15S].`;
+                }
+                if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+                    try { this.mediaRecorder.stop(); } catch (e) {}
+                }
+                if (AppState.mediaStreamDest && AppState.gainNode) {
+                    try { AppState.gainNode.disconnect(AppState.mediaStreamDest); } catch (e) {}
+                }
+            }
+
+            finalizeVideoDownload() {
+                if (!this.recordedChunks.length) {
+                    showToast('VIDEO RECORDING EMPTY');
+                    return;
+                }
+                const blob = new Blob(this.recordedChunks, { type: this.mimeType || 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                const cn = AppState.trackTitle.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+                const cs = AppState.systems[AppState.currentSystemIndex].toLowerCase();
+                const durSec = Math.max(1, Math.min(15, Math.round((performance.now() - this.startTime) / 1000)));
+
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `soundgraph_a4_vertical_${cs}_${cn || 'reel'}_${durSec}s.${this.extension}`;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    if (document.body.contains(a)) document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 1500);
+
+                showToast(`A4 VERTICAL VIDEO EXPORTED (${durSec}S ${this.extension.toUpperCase()})`);
+            }
+        }
+
+        VideoReelExporter = new TypographicVideoExporter();
+        if (DOM.exportVideoTrigger) {
+            DOM.exportVideoTrigger.addEventListener('click', () => {
+                VideoReelExporter.toggleRecording();
+            });
+        }
+    </script>
+</body>
+</html>
